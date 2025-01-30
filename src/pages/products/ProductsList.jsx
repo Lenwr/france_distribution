@@ -1,7 +1,7 @@
 /* eslint-disable */
 import AddArticleForm from "./addProductForm.jsx";
 import {useProducts} from "../../hooks/useProduct.js";
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import ProductDetails from "./productDetails.jsx";
 import {Box, ReceiptText, CircleX, Trash2, Pencil} from 'lucide-react';
 import {Link, useLocation, useNavigate} from "react-router-dom";
@@ -11,7 +11,7 @@ import {toast, ToastContainer} from "react-toastify";
 
 
 function ProductsList() {
-    const {getProducts,deleteProduct} = useProducts(); // Récupère la fonction depuis le hook
+    const {getProducts, deleteProduct} = useProducts();
     const [articles, setArticles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -20,36 +20,46 @@ function ProductsList() {
     const [tabName, setTabName] = useState("stock");
     const [page, setPage] = useState("Stock");
     const [message, setMessage] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
-    // Fonction pour récupérer les articles via le hook
-    const fetchArticles = async () => {
+    const fetchArticles = useCallback(async () => {
         try {
             setLoading(true);
-            const data = await getProducts(); // Appelle la fonction du hook
+            const data = await getProducts();
             setArticles(data);
         } catch (err) {
             setError(err.message);
         } finally {
             setLoading(false);
         }
-    };
+    }, [getProducts]);
+
     const handleDelete = async () => {
-        deleteProduct(productDetails.idArticle).then((res) => {})
-        toast("Votre article à été supprimé")
+        try {
+            await deleteProduct(productDetails.idArticle);
+            toast.success("Produit supprimé avec succès !");
+        } catch (err) {
+            console.error("Error deleting product:", err);
+            toast.error("Erreur lors de la suppression du produit.");
+        }
+        try {
+            await deleteProduct(productDetails.idArticle);
+        } catch (err) {
+            console.error("Error deleting product:", err);
+        }
     };
+
     const filteredArticles = articles
-        .filter((article) =>
-            article.name.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+        .filter((article) => article.name.toLowerCase().includes(searchTerm.toLowerCase()))
         .sort((a, b) => a.name.localeCompare(b.name));
+
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
     };
-    const styles = {}
 
-    // Utilisation de useEffect pour charger les articles au montage
     useEffect(() => {
-        fetchArticles().then(r => {});
+        fetchArticles();
     }, []);
     return (
 
@@ -177,29 +187,29 @@ function ProductsList() {
             {
                 tabName === "stock" ?
                     <div
-                        className=" h-[35em] overflow-x-auto w-full my-3 bg-white rounded-lg shadow-lg ">
+                        className="h-[38em] w-full overflow-x-auto">
                         <table
-                            className="  table table-pin-rows w-full text-gray-800 bg-white rounded-lg ">
+                            className=" w-full h-[40em]   ">
                             {/* Table head */}
-                            <thead className="bg-gray-200  text-white ">
+                            <thead className="bg-gray-600 border-b   ">
 
                             <tr>
-                                <th className="py-2 px-4 text-left">Article</th>
-                                <th className="py-2 px-4 text-left">Quantité</th>
-                                <th className="py-2 px-4 text-left">Prix</th>
-                                <th className="py-2 px-4 text-left">Actions</th>
+                                <th    scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">Article</th>
+                                <th    scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">Quantité</th>
+                                <th    scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">Prix</th>
+                                <th    scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">Actions</th>
                             </tr>
                             </thead>
                             {/* Table body */}
                             <tbody className="">
                             {filteredArticles.map((article) => (
                                 <tr key={article.id}
-                                    className="hover:bg-gray-100 hover:shadow-lg cursor-pointer border-gray-400">
-                                    <td className="py-2 w-[65%] px-4">{article.name}</td>
-                                    <td className={article.quantity < 5 ? "flex flex-row py-2 px-4 justify-center items-center text-red-600" : "flex flex-row py-2 px-4 justify-center items-center"}>
+                                    className="bg-white  cursor-pointer hover:shadow-2xl  border-b">
+                                    <td className="py-2 w-[65%] text-black px-4">{article.name}</td>
+                                    <td className={article.quantity < 5 ? "flex flex-row place-items-center h-full text-red-600" : "flex flex-row py-2 px-4 place-items-center"}>
                                         <Box className="mx-2" size={16}/> {article.quantity}</td>
-                                    <td className="py-2 px-4">{article.price} €</td>
-                                    <td className="py-2 content-center flex flex-row px-4">
+                                    <td className="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap place-items-center">{article.price} €</td>
+                                    <td className="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap place-items-center flex flex-row">
                                         <Pencil size={16}
                                                 onClick={
                                                     () => {

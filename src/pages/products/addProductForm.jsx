@@ -66,19 +66,21 @@ const AddArticleForm = () => {
     return (
         <div className="container flex flex-col items-center p-6 bg-white ">
             <h2 className="text-2xl text-black font-bold mb-4">Ajouter un article</h2>
-            <button onClick={() => setIsScanning(!isScanning)} className=" btn btn-primary">
+            <button onClick={() => setIsScanning(!isScanning)} className=" btn bg-gray-600 text-white border-0">
                 {isScanning ? "Arrêter le scan" : "Ajouter par scan"}
             </button>
             {isScanning && (
-                <div className="bg-white shadow-lg rounded-lg p-4">
+                <div className="bg-white shadow-lg rounded-lg my-4">
                     <BarcodeScannerComponent
                         onUpdate={(err, result) => {
                             if (result) setData(result.text);
                         }}
                     />
+                    <p className="mt-4  text-center text-black text-lg font-semibold">Code scanné : <span
+                        className="text-blue-500">{data || "Aucun code détecté"}</span></p>
+
                 </div>
             )}
-            <p className="mt-4 text-black text-lg font-semibold">Code scanné : <span className="text-blue-500">{data || "Aucun code détecté"}</span></p>
             {product && (
                 <div className="mt-6 p-4 bg-white shadow-lg rounded-lg w-80 text-center">
                     <h3 className="text-xl text-black font-bold">{product.product_name}</h3>
@@ -90,11 +92,11 @@ const AddArticleForm = () => {
             <form onSubmit={handleSubmit} className="w-full max-w-md mt-8">
                 <div className="mb-4">
                     <label className="block text-gray-700">Nom de l'article</label>
-                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom de l'article" className="w-full p-2 border rounded" />
+                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom de l'article" className="w-full bg-white p-2 border rounded" />
                 </div>
                 <div className="mb-4">
                     <label className="block text-gray-700">Prix</label>
-                    <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Prix" className="w-full p-2 border rounded" />
+                    <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Prix" className="w-full bg-white p-2 border rounded" />
                 </div>
                 <button className="w-full bg-green-700 text-white p-2 rounded" type="submit">Ajouter</button>
             </form>
