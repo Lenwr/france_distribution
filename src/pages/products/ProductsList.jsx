@@ -8,6 +8,7 @@ import {Link, useLocation, useNavigate} from "react-router-dom";
 import Orders from "../orders/Orders.jsx";
 import AddOrderForm from "../orders/AddOrderForm.jsx";
 import {toast, ToastContainer} from "react-toastify";
+import OrderHistory from "../orders/orderHistory.jsx";
 
 
 function ProductsList() {
@@ -182,6 +183,10 @@ function ProductsList() {
                         setTabName("commandes")
                         setPage("Commandes")
                     }}>Commandes</a>
+                    <a role="tab" className="tab text-black " onClick={() => {
+                        setTabName("Historique")
+                        setPage("Historique")
+                    }}>Tous</a>
                 </div>
             </div>
             {
@@ -189,15 +194,24 @@ function ProductsList() {
                     <div
                         className="h-[38em] w-full overflow-x-auto">
                         <table
-                            className=" w-full h-[40em]   ">
+                            className=" w-full   ">
                             {/* Table head */}
                             <thead className="bg-gray-600 border-b   ">
 
                             <tr>
-                                <th    scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">Article</th>
-                                <th    scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">Quantité</th>
-                                <th    scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">Prix</th>
-                                <th    scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">Actions</th>
+                                <th scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">Article
+                                </th>
+                                <th scope="col"
+                                    className="text-sm font-medium text-white px-6 py-4 text-left">Quantité
+                                </th>
+                                <th scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">Prix
+                                    d'achat
+                                </th>
+                                <th scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">Prix
+                                    de vente
+                                </th>
+                                <th scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">Actions
+                                </th>
                             </tr>
                             </thead>
                             {/* Table body */}
@@ -209,6 +223,7 @@ function ProductsList() {
                                     <td className={article.quantity < 5 ? "flex flex-row place-items-center h-full text-red-600" : "flex flex-row py-2 px-4 place-items-center"}>
                                         <Box className="mx-2" size={16}/> {article.quantity}</td>
                                     <td className="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap place-items-center">{article.price} €</td>
+                                    <td className="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap place-items-center">{article.sell_price} FCFA</td>
                                     <td className="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap place-items-center flex flex-row">
                                         <Pencil size={16}
                                                 onClick={
@@ -244,8 +259,8 @@ function ProductsList() {
                             </tbody>
                         </table>
                     </div>
-                    :
-                    <Orders className="w-full  "/>
+                    : tabName === 'commandes' ?
+                    <Orders className="w-full  "/> : <OrderHistory />
             }
 
         </div>

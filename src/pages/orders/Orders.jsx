@@ -32,36 +32,36 @@ function Orders() {
     }, []);
     return (
         <div
-            className=" h-[35em] overflow-x-auto w-full my-3 bg-white rounded-lg shadow-lg ">
+            className="h-[38em] w-full overflow-x-auto">
             <table
-                className="table w-full text-gray-800 bg-white rounded-lg overflow-hidden table-pin-rows table-pin-cols">
+                className="w-full">
                 {/* Table head */}
-                <thead className="bg-gray-200 text-white ">
+                <thead className="bg-gray-600 border-b  ">
 
                 <tr>
-                    <th className="py-2 px-4 text-left">Commande</th>
-                    <th className="py-2 px-4 text-left">quantité</th>
-                    <th className="py-2 px-4 text-left">Statut</th>
-                    <th className="py-2 px-4 text-left">Actions</th>
+                    <th scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">Commande</th>
+                    <th scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">quantité</th>
+                    <th scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">Actions</th>
                 </tr>
                 </thead>
                 {/* Table body */}
                 <tbody className="">
                 {commandes.map((article) => (
                     <tr key={article.id}
-                        className="hover:bg-gray-100 hover:shadow-lg cursor-pointer border-gray-400 ">
-                        <td className="py-2 px-4">{article.name}</td>
-                        <td className={article.quantity < 5 ? "flex flex-row p-4 place-items-center text-red-600" : "flex place-items-center flex-row p-4"}>
+                        className="bg-white  cursor-pointer hover:shadow-2xl  border-b">
+                        <td className="py-2 w-[65%] text-black px-4">{article.name}</td>
+                        <td className={article.quantity < 5 ? "flex flex-row place-items-center h-full text-red-600" : "flex flex-row py-2 px-4 place-items-center"}>
                             <Box className="mx-2" size={16}/> {article.quantity}</td>
-                        <td className="p-4 text-center text-white">
-                            <p className={article.statut === 'En cours' ? " bg-orange-400 rounded justify-center items-center " : "bg-green-700"}>{article.statut}</p>
-                        </td>
-                        <td className="flex flex-row place-items-center">
-                            <SquareArrowDown className="text-green-700 hover:scale-110" onClick={()=>{
+                        <td  className=" place-items-center">
+                            {   /*   <SquareArrowDown size={16} className="text-green-700 hover:scale-110" onClick={()=>{
                                 document.getElementById('my_receptionOrderForm').showModal()
                                 setRecipes(article)
-                            }}/>
-                            <Plus className="text-blue-700 hover:scale-110"/>
+                            }}/> */ }
+                            <span className=" p-2 bg-green-700 text-white rounded " onClick={()=>{
+                                document.getElementById('my_receptionOrderForm').showModal()
+                                setRecipes(article)
+                            }} > Réceptionner</span>
+                            <Plus size={16} className="hidden text-blue-700 hover:scale-110"/>
                         </td>
                     </tr>
                 ))}

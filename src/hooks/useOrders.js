@@ -1,4 +1,4 @@
-import supabase from "./useSupabase.js";
+import {supabase} from "./useSupabase.js";
 
 export const useOrders = () => {
     const getOrders = async () => {
@@ -41,7 +41,7 @@ export const useOrders = () => {
         return data;
     };
 
-    const receiveOrder = async (commandeId, quantityReceived) => {
+    const receiveOrder = async (commandeId, quantityReceived ) => {
         try {
             // Récupérer la commande
             const { data: commande, error: commandeError } = await supabase
@@ -68,7 +68,9 @@ export const useOrders = () => {
 
             const { error: updateArticleError } = await supabase
                 .from('articles')
-                .update({ quantity: updatedQuantity })
+                .update({
+                    quantity: updatedQuantity,
+                })
                 .eq('idArticle', idArticle);
 
             if (updateArticleError) throw updateArticleError;

@@ -1,4 +1,4 @@
-import supabase from "./useSupabase.js";
+import {supabase} from "./useSupabase.js";
 
 export const useProducts = () => {
     const getProducts = async () => {
@@ -32,10 +32,10 @@ export const useProducts = () => {
         return data;
     };
 
-    const updateProduct = async (idArticle, updatedFields) => {
+    const updateProductPrice = async (idArticle, updatedFields) => {
         const { data, error } = await supabase
             .from('articles')
-            .update({'quantity' : updatedFields}) // Met à jour les champs spécifiés
+            .update({'sell_price' : updatedFields}) // Met à jour les champs spécifiés
             .eq('id', idArticle); // Filtre par ID
         if (error) throw error;
         return data;
@@ -45,5 +45,5 @@ export const useProducts = () => {
 
 
 
-    return { getProducts, addProduct, getProductById, deleteProduct, updateProduct  };
+    return { getProducts, addProduct, getProductById, deleteProduct, updateProductPrice  };
 };

@@ -1,6 +1,6 @@
 /* eslint-disable */
 import React, {useEffect, useState} from 'react';
-import supabase from "../../hooks/useSupabase.js";
+import {supabase} from "../../hooks/useSupabase.js";
 import {useProducts} from "../../hooks/useProduct.js";
 
 function AddOrderForm(props) {
@@ -34,33 +34,45 @@ function AddOrderForm(props) {
         fetchArticles();
     }, []);
 
-
     const handleSubmit = async (e) => {
         e.preventDefault(); // Empêche le rechargement de la page
 
         // Validation simple
-        if (!quantity || quantity <= 0 ) {
+        if (!quantity || quantity <= 0) {
             setMessage('Veuillez remplir le champ.');
             return;
         }
 
         try {
-            // Appel à Supabase pour insérer un nouvel article
+            // 1️⃣ Ajouter la commande dans la table `commandes`
             const { data, error } = await supabase.from('commandes').insert([
                 {
-                    idArticle : selectedArticle  ,
-                    quantity : parseInt(quantity , 10),
-                    name : searchTerm ,
-                    statut : "En cours" ,
+                    idArticle: selectedArticle,
+                    quantity: parseInt(quantity, 10),
+                    name: searchTerm,
+                    statut: "En cours",
                 },
-            ]);
+            ]).select('*').single(); // On récupère directement l'objet inséré
 
             if (error) throw error;
 
-            // Réinitialiser le formulaire et afficher un message de succès
-            setQuantity("")
-            setSearchTerm("")
-            setMessage('Commande ajouté avec succès !');
+            // 2️⃣ Copier la commande dans `commandes_historique`
+            const { error: errorHistorique } = await supabase.from('commandes_historique').insert([
+                {
+                    id_commande: data.id,  // ID de la commande ajoutée
+                    id_article: data.idArticle,
+                    quantity: data.quantity,
+                    name: data.name,
+                    date_commande: new Date(), // Date actuelle
+                },
+            ]);
+
+            if (errorHistorique) throw errorHistorique;
+
+            // 3️⃣ Réinitialiser le formulaire et afficher un message de succès
+            setQuantity("");
+            setSearchTerm("");
+            setMessage('Commande ajoutée avec succès !');
         } catch (error) {
             setMessage(`Erreur : ${error.message}`);
         }

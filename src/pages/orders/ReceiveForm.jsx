@@ -1,7 +1,5 @@
 /* eslint-disable */
 import {useState} from "react";
-import supabase from "../../hooks/useSupabase.js";
-import {useProducts} from "../../hooks/useProduct.js";
 import {useOrders} from "../../hooks/useOrders.js";
 
 ; // Assure-toi d'avoir configuré Supabase
@@ -11,6 +9,7 @@ const ReceiveForm = (props) => {
     const [name, setName] = useState('');
     const [quantity, setQuantity] = useState('');
     const [message, setMessage] = useState('');
+    const [price , setPrice] = useState('')
     const [loading, setLoading] = useState(true);
 
     const {receiveOrder} = useOrders();
@@ -18,7 +17,7 @@ const ReceiveForm = (props) => {
     // Fonction pour gérer la soumission du formulaire
     const handleSubmit = async (e) => {
         e.preventDefault(); // Empêche le rechargement de la page
-        const response = await receiveOrder(props.recipes.idCommande, parseInt(quantity, 10))
+        const response = await receiveOrder(props.recipes.idCommande, parseInt(quantity, 10) )
         if (response.success) {
             setMessage('Commande réceptionnée avec succès.');
         } else {
@@ -53,7 +52,7 @@ const ReceiveForm = (props) => {
                         </svg>
                     </label>
                 </div>
-                <button className="mt-4 btn bg-green-700" type="submit">receptionner</button>
+                <button className="mt-4 btn bg-green-700" type="submit">Réceptionner</button>
             </form>
             {message && <p>{message}</p>}
         </div>

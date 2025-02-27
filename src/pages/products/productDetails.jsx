@@ -11,9 +11,9 @@ function ProductDetails(props) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [name, setName] = useState("");
-    const [quantity, setQuantity] = useState("");
+    const [price, setPrice] = useState("");
     const [currentOrder, setCurrentOrder] = useState("");
-    const {updateProduct} = useProducts();
+    const {updateProductPrice} = useProducts();
 
 
     useEffect(() => {
@@ -23,12 +23,11 @@ function ProductDetails(props) {
     }, [props]);
 
   function handle(){
-      if(quantity > article.quantity){
-    toast("Veuillez rentrer une valeur valide !!!")
+      if(price === 0){
+    toast("Veuillez rentrer une valeur supérieure à 0 !!!")
       } else {
-          const updateQuantity = article.quantity - quantity ;
-          updateProduct(article.id, updateQuantity).then(r => {});
-          setQuantity(updateQuantity.toString());
+          updateProductPrice(article.id, price).then(r => {});
+          setPrice(price);
           toast("Article mis à jour !!!")
       }
 
@@ -47,17 +46,17 @@ function ProductDetails(props) {
                 <div className=" place-items-center">
                     <label className="form-control w-full max-w-xs">
                         <div className="label flex flex-col items-center">
-                            <h1 className="text-2xl font-semibold"> Mettre à jour les ventes </h1>
-                            <p className="my-2 text-black">Quantité vendue </p>
-                            <p className="text-red-600">{quantity > article.quantity ? "Votre quantité est supérieure à la quantité en stock" : ""}</p>
+                            <h1 className="text-2xl font-semibold"> Mettre à jour les prix de vente </h1>
+                            <p className="my-2 text-black">Prix de vente </p>
+                            <p className="text-red-600">{price < 0 ? "Votre prix est inférieure à 0" : ""}</p>
                         </div>
                         <input type="number"
                                onChange={(e) => {
-                                   setQuantity(e.target.value)
+                                   setPrice(e.target.value)
                                }}
-                               placeholder={props.article.quantity}
+                               placeholder={props.article.sell_price}
                                className="input bg-cyan-50 input-bordered w-full max-w-xs"
-                               name={quantity}
+                               name={price}
                         />
                     </label>
                     <ToastContainer/>
