@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import {supabase} from "../../hooks/useSupabase.js";
 import BarcodeScannerComponent from "react-qr-barcode-scanner";
 
-const AddArticleForm = () => {
+const AddArticleForm = ({ resetState, setResetState }) => {
     const [name, setName] = useState('');
     const [price, setPrice] = useState('');
     const [message, setMessage] = useState('');
@@ -14,11 +14,18 @@ const AddArticleForm = () => {
     const [isBarcodeInputActive, setIsBarcodeInputActive] = useState(false);
     const [scanCode, setScanCode] = useState("");
 
+
     useEffect(() => {
         if (data) {
             fetchProduct(data);
         }
     }, [data]);
+    useEffect(() => {
+        if (resetState) {
+            resetFields();
+            setResetState(false); // ✅ Réinitialiser resetState à false
+        }
+    }, [resetState, setResetState])
 
     const fetchProduct = async (ean) => {
         try {
@@ -37,6 +44,7 @@ const AddArticleForm = () => {
             console.error("Erreur lors de la récupération :", error);
         }
     };
+    
 
     useEffect(() => {
         if (isBarcodeInputActive) {
@@ -63,8 +71,9 @@ const AddArticleForm = () => {
             setMessage("Le nom de l'article ne peut pas être vide.");
             return;
         }
-        if (!price || isNaN(price) || parseFloat(price) <= 0) {
-            setMessage("Veuillez entrer un prix valide supérieur à 0.");
+        if (!price || isNaN(price) || parseFloat(price) < 0) {
+            setMessage("Veuillez entrer un prix valide supérieur ou égal à 0.");
+            setPrice("0"); // ✅ Mettre à jour l'état avec "0"
             return;
         }
 
@@ -90,6 +99,14 @@ const AddArticleForm = () => {
         } catch (error) {
             setMessage(`Erreur : ${error.message}`);
         }
+    };
+    const resetFields = () => {
+        setName("");
+        setPrice("");
+        setData("");
+        setProduct(null);
+        setNotFound(false);
+        setMessage("");
     };
 
     return (

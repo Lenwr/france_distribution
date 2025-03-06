@@ -23,6 +23,7 @@ function ProductsList() {
     const [message, setMessage] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const [resetState , setResetState]=useState(false)
 
     const fetchArticles = useCallback(async () => {
         try {
@@ -70,11 +71,13 @@ function ProductsList() {
                 {/* Open the modal using document.getElementById('ID').showModal() method */}
                 <dialog id="my_productForm" className="modal ">
                     <div className="modal-box bg-white">
-                        <AddArticleForm/>
+                        <AddArticleForm resetState={resetState} setResetState={setResetState} />
                         <div className="modal-action">
                             <form method="dialog">
                                 {/* if there is a button in form, it will close the modal */}
-                                <button className="btn bg-red-700">Fermer</button>
+                                <button className="btn bg-red-700"  onClick={()=>{
+                                    setResetState(true)
+                                }}>Fermer</button>
                             </form>
                         </div>
                     </div>
@@ -175,18 +178,18 @@ function ProductsList() {
             {/* Table of products */}
             <div>
                 <div role="tablist" className="tabs tabs-bordered ">
-                    <a role="tab" className="tab text-black" onClick={() => {
+                    <a role="tab" className="tab hover:scale-125 duration-500 cursor-pointer text-black" onClick={() => {
                         setTabName("stock")
                         setPage("Stock")
-                    }}>Stock </a>
-                    <a role="tab" className="tab text-black " onClick={() => {
+                    }}>Mon Stock </a>
+                    <a role="tab" className="tab hover:scale-125 duration-500 cursor-pointer text-black " onClick={() => {
                         setTabName("commandes")
                         setPage("Commandes")
-                    }}>Commandes</a>
-                    <a role="tab" className="tab text-black " onClick={() => {
+                    }}>Mes commandes</a>
+                    <a role="tab" className="tab hover:scale-125 duration-500 cursor-pointer text-black " onClick={() => {
                         setTabName("Historique")
                         setPage("Historique")
-                    }}>Tous</a>
+                    }}>Historique des commandes</a>
                 </div>
             </div>
             {
@@ -220,7 +223,7 @@ function ProductsList() {
                                 <tr key={article.id}
                                     className="bg-white  cursor-pointer hover:shadow-2xl  border-b">
                                     <td className="py-2 w-[65%] text-black px-4">{article.name}</td>
-                                    <td className={article.quantity < 5 ? "flex flex-row place-items-center h-full text-red-600" : "flex flex-row py-2 px-4 place-items-center"}>
+                                    <td className={article.quantity < 5 ? "flex flex-row place-items-center h-full text-red-600" : "flex flex-row py-2 px-4 text-black place-items-center"}>
                                         <Box className="mx-2" size={16}/> {article.quantity}</td>
                                     <td className="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap place-items-center">{article.price} €</td>
                                     <td className="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap place-items-center">{article.sell_price} FCFA</td>

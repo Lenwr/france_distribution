@@ -4,7 +4,7 @@ import {useOrders} from "../../hooks/useOrders.js";
 
 ; // Assure-toi d'avoir configuré Supabase
 
-const ReceiveForm = (props) => {
+const ReceiveForm = ({idArticleSpended , idQuantitySpended}) => {
     // États locaux pour les champs du formulaire
     const [name, setName] = useState('');
     const [quantity, setQuantity] = useState('');
@@ -12,19 +12,20 @@ const ReceiveForm = (props) => {
     const [price , setPrice] = useState('')
     const [loading, setLoading] = useState(true);
 
+    
+
     const {receiveOrder} = useOrders();
 
     // Fonction pour gérer la soumission du formulaire
     const handleSubmit = async (e) => {
         e.preventDefault(); // Empêche le rechargement de la page
-        const response = await receiveOrder(props.recipes.idCommande, parseInt(quantity, 10) )
+        const response = await receiveOrder(idArticleSpended, parseInt(quantity, 10) )
         if (response.success) {
             setMessage('Commande réceptionnée avec succès.');
         } else {
 
         }
     }
-
 
     return (
         <div className="container ">
@@ -54,7 +55,8 @@ const ReceiveForm = (props) => {
                 </div>
                 <button className="mt-4 btn bg-green-700" type="submit">Réceptionner</button>
             </form>
-            {message && <p>{message}</p>}
+            
+            {quantity > idQuantitySpended ? "Valeur demandée supérieure à la valeur de la commande" : message && <p>{message}</p>}
         </div>
     );
 };

@@ -9,33 +9,37 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const navigate = useNavigate(); // Initialisation du navigate
+const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError(null);
+    try {
+        const { error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
+        if (error) throw error;
 
-        try {
-            const { error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
-            if (error) throw error;
-
-            alert("Connexion réussie !");
-            navigate("/"); // Redirection vers Dashboard après connexion
-        } catch (err) {
-            setError(err.message);
-        }
-        setLoading(false);
-    };
+        console.log("Connexion réussie !"); // Vérifier si cette ligne est atteinte
+        alert("Connexion réussie !");
+        navigate("/"); // Redirection vers Dashboard après connexion
+    } catch (err) {
+        console.error("Erreur lors de la connexion :", err); // Afficher l'erreur dans la console
+        setError(err.message);
+    }
+    setLoading(false);
+};
 
     return (
-        <div className="min-h-screen flex items-center  justify-center bg-gradient-to-br from-gray-900 to-gray-700">
-            <div className="bg-white px-8 py-16 rounded-2xl shadow-xl w-full max-w-md">
-                <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-                    Connexion
+        <div className="min-h-screen flex items-center bg-cover justify-center bg-[url(/loginPage.jpg)] ">
+            <div className="bg-white opacity-90 px-8 py-16 rounded-2xl shadow-2xl w-full max-w-md">
+                <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
+                    France Distribution
                 </h2>
+                <h3 className="text-2xl font-semi-bold text-center text-gray-800 mb-6">
+                    Connexion
+                </h3>
                 <form onSubmit={handleLogin} className="space-y-4">
                     <div>
                         <label className="block text-gray-700 font-medium">Email</label>

@@ -40,10 +40,18 @@ export const useProducts = () => {
         if (error) throw error;
         return data;
     };
+    const updatePurchasePrice = async (idArticle, updatedFields) => {
+        const { data, error } = await supabase
+            .from('articles')
+            .update({'price' : updatedFields}) // Met à jour les champs spécifiés
+            .eq('id', idArticle); // Filtre par ID
+        if (error) throw error;
+        return data;
+    };
 
 
 
 
 
-    return { getProducts, addProduct, getProductById, deleteProduct, updateProductPrice  };
+    return { getProducts, addProduct, getProductById, deleteProduct, updateProductPrice ,updatePurchasePrice  };
 };
