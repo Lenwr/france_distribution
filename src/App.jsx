@@ -1,7 +1,7 @@
 /* eslint-disable */
 import './App.css'
 import {
-    BrowserRouter as Router, Route, Routes,
+    BrowserRouter as Router, Route, Routes,Navigate
 } from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard.jsx";
@@ -32,6 +32,7 @@ function App() {
                       <Dashboard />
                   </AdminRoute>
               } />
+              
               <Route path="/sales" element={
                <AuthRoute>
                <Sales/>
@@ -39,6 +40,7 @@ function App() {
               }/>
               <Route path="/profile" element={<Account/> }/>
               <Route path="/login" element={<Login/> }/>
+              <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
           </Router>
               </AuthProvider>
