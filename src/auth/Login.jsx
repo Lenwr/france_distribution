@@ -23,7 +23,7 @@ const handleLogin = async (e) => {
 
         console.log("Connexion réussie !"); // Vérifier si cette ligne est atteinte
         alert("Connexion réussie !");
-        navigate("/"); // Redirection vers Dashboard après connexion
+        navigate("/dashboard"); // Redirection vers Dashboard après connexion
     } catch (err) {
         console.error("Erreur lors de la connexion :", err); // Afficher l'erreur dans la console
         setError(err.message);
