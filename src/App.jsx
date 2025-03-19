@@ -36,7 +36,7 @@ function App() {
         }/>
         
         <Route path="/profile" element={<Account />} />
-        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
         <Route path="*" element={<NotFound />} /> {/* Utilisez le composant NotFound */}
       </Routes>
     </Router>
