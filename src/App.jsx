@@ -22,9 +22,9 @@ function App() {
     <Router>
       <Routes>
         <Route path="/dashboard" element={
-     
+        <AuthRoute>
             <Dashboard />
-   
+       </AuthRoute>
         }/>
         
         <Route path="/sales" element={
