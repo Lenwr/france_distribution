@@ -9,12 +9,12 @@ import NavBar from "../components/navBar.jsx";
 import Footer from "../components/Footer.jsx";
 import BarCodeScanner from "../components/BarCodeScanner.jsx"; // ✅ Import du scanner
 import { useSelector } from "react-redux";
-
+import { useAuth } from "../auth/AuthProvider.jsx"; 
 
 function Dashboard() {
     const [choice, setChoice] = useState("dashboard");
     const { user } = useSelector((state) => state.auth);
-  
+    const { profile, ploading } = useAuth();
 
 
     return (
@@ -24,7 +24,7 @@ function Dashboard() {
                 {/* Sidebar */}
                 <div className="sideBar md:w-[20%] flex flex-col shadow-lg p-4">
                     <h1 className="text-black text-center text-2xl m-2 p-3 rounded shadow-lg bg-cyan-50 bg-opacity-30">
-                        {user?.username || "Utilisateur"}
+                        {profile?.username || "Utilisateur"}
                     </h1>
 
                     <div className="flex flex-col">
