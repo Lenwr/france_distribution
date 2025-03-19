@@ -22,20 +22,20 @@ function App() {
     <Router>
       <Routes>
         <Route path="/dashboard" element={
-     
+        <AuthRoute>
             <Dashboard />
-   
+       </AuthRoute>
         }/>
         
         <Route path="/sales" element={
-       
+          <AuthRoute>
             <Sales />
-        
+          </AuthRoute>
         }/>
         
         <Route path="/profile" element={<Account />} />
         <Route path="/login" element={<Login />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
   );
