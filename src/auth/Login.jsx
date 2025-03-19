@@ -1,66 +1,93 @@
 /* eslint-disable */
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Import de useNavigate
+import { useNavigate } from "react-router-dom"; 
 import { supabase } from "../hooks/useSupabase.js";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const navigate = useNavigate(); // Initialisation du navigate
-const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+    const [showPassword, setShowPassword] = useState(false);
 
-    try {
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
-        if (error) throw error;
 
-        console.log("Connexion réussie !"); // Vérifier si cette ligne est atteinte
-        alert("Connexion réussie !");
-        navigate("/dashboard"); // Redirection vers Dashboard après connexion
-    } catch (err) {
-        console.error("Erreur lors de la connexion :", err); // Afficher l'erreur dans la console
-        setError(err.message);
-    }
-    setLoading(false);
-};
+    
+    const navigate = useNavigate();
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+
+        try {
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+            if (error) throw error;
+
+            alert("Connexion réussie !");
+            navigate("/dashboard"); 
+        } catch (err) {
+            setError(err.message);
+        }
+        setLoading(false);
+    };
 
     return (
-        <div className="min-h-screen flex items-center bg-cover justify-center bg-[url(/loginPage.jpg)] ">
-            <div className="bg-white opacity-90 px-8 py-16 rounded-2xl shadow-2xl w-full max-w-md">
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 relative">
+            {/* Arrière-plan avec effet de flou */}
+            <div className="absolute inset-0 bg-[url(/loginPage.jpg)] bg-cover bg-center blur-sm"></div>
+
+            {/* Contenu principal */}
+            <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md relative z-10">
                 <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
                     France Distribution
                 </h2>
-                <h3 className="text-2xl font-semi-bold text-center text-gray-800 mb-6">
+                <h3 className="text-2xl font-semibold text-center text-gray-700 mb-6">
                     Connexion
                 </h3>
-                <form onSubmit={handleLogin} className="space-y-4">
-                    <div>
+
+                <form onSubmit={handleLogin} className="space-y-5">
+                    {/* Champ Email */}
+                    <div className="relative">
                         <label className="block text-gray-700 font-medium">Email</label>
-                        <input
-                            type="email"
-                            placeholder="Votre email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        />
+                        <div className="flex items-center border rounded-lg overflow-hidden">
+                            <Mail className="mx-3 text-gray-400" />
+                            <input
+                                type="email"
+                                placeholder="Votre email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            />
+                        </div>
                     </div>
-                    <div>
+
+                    {/* Champ Mot de passe */}
+                    <div className="relative">
                         <label className="block text-gray-700 font-medium">Mot de passe</label>
-                        <input
-                            type="password"
-                            placeholder="Votre mot de passe"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        />
+                        <div className="flex items-center border rounded-lg overflow-hidden">
+                            <Lock className="mx-3 text-gray-400" />
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Votre mot de passe"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            />
+                            <button 
+                                type="button" 
+                                onClick={() => setShowPassword(!showPassword)} 
+                                className="px-3 text-gray-500 hover:text-gray-700 transition-all"
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
                     </div>
+
+                    {/* Bouton de connexion */}
                     <button
                         type="submit"
                         disabled={loading}
@@ -69,10 +96,16 @@ const handleLogin = async (e) => {
                         {loading ? "Connexion..." : "Se connecter"}
                     </button>
                 </form>
+
+                {/* Message d'erreur */}
                 {error && (
-                    <p className="text-red-500 text-center mt-3">{error}</p>
+                    <p className="text-red-500 text-center mt-4 animate-pulse">
+                        {error}
+                    </p>
                 )}
-                <p className="text-gray-500 text-center mt-4 hidden">
+
+                {/* Lien d'inscription */}
+                <p className="text-gray-500 text-center mt-6">
                     Pas encore de compte ? <a href="/signup"
                                               className="text-blue-600 font-medium hover:underline">Inscrivez-vous</a>
                 </p>

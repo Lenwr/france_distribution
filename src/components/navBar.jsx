@@ -1,14 +1,12 @@
 /* eslint-disable */
 import React from 'react';
-import { Link } from "react-router";
-import {useAuth} from "../auth/AuthProvider.jsx";
+import {useSelector} from "react-redux"
 import {supabase} from "../hooks/useSupabase.js";
 import {useNavigate} from "react-router-dom";
 
 function NavBar(props) {
-    const { user } = useAuth();
+    const { user } = useSelector((state) => state.auth);
     const navigate = useNavigate();
-    const { profile, loading } = useAuth();
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -33,9 +31,7 @@ function NavBar(props) {
                         <ul
                             tabIndex={0}
                             className="menu menu-sm dropdown-content bg-base-100 text-white rounded-box z-[1] mt-3 w-52 p-2 shadow">
-                            <li onClick={() => navigate("/profile")}>
-                                <a> Profile</a>
-                            </li>
+                        
                             <li onClick={handleLogout}><a>Se deconnecter</a></li>
                         </ul>
                     </div>

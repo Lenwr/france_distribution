@@ -1,17 +1,17 @@
 /* eslint-disable */
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../auth/AuthProvider.jsx";
+import { useSelector } from "react-redux";
+import { useAuth } from "../auth/AuthProvider.jsx"; 
+
 
 const AdminRoute = ({ children }) => {
-  const { profile, loading } = useAuth();
+  const { user, role, loading } = useSelector((state) => state.auth);
+  const { profile, ploading } = useAuth();
 
   if (loading) return <p>Chargement...</p>;
 
-  return profile?.role === "admin" ? (
-    children
-  ) : (
-    <Navigate to="/login" replace />
-  );
+  return user && profile?.role === "admin" ? children : <Navigate to="/login" replace />;
 };
 
 export default AdminRoute;
+

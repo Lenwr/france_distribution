@@ -1,54 +1,45 @@
 /* eslint-disable */
-import './App.css'
-import {
-    BrowserRouter as Router, Route, Routes,Navigate
-} from "react-router-dom";
-
-import Dashboard from "./pages/Dashboard.jsx";
-import ProductsList from "./pages/products/ProductsList.jsx";
-import ProductDetails from "./pages/products/productDetails.jsx";
-import Orders from "./pages/orders/Orders.jsx";
-import BarCodeScanner from "./components/BarCodeScanner.jsx";
-import OrderHistory from "./pages/orders/orderHistory.jsx";
-import Sales from "./pages/sales/sales.jsx";
-import Account from "./pages/profile/Account.jsx";
-import Login from "./auth/Login.jsx";
-import AuthRoute from "./routes/AuthRoute.jsx";
-import {Home} from "lucide-react";
-import AuthProvider from "./auth/AuthProvider.jsx";
-import NavBar from "./components/navBar.jsx";
-import AdminRoute from "./routes/AdminRoute.jsx";
-
+import './App.css';
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { useEffect } from "react";
+import { checkSession } from "./redux/features/authSlice"; // Vérifie la session
+import Dashboard from "./pages/Dashboard";
+import Sales from "./pages/sales/sales";
+import Account from "./pages/profile/Account";
+import Login from "./auth/Login";
+import AuthRoute from "./routes/AuthRoute";
+import AdminRoute from "./routes/AdminRoute";
 
 function App() {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(checkSession()); // Vérifie la session au chargement de l'appli
+  }, [dispatch]);
+
   return (
-      <>
-      <AuthProvider>
-          <Router>
-          <Routes>
-              {/* Route protégée */}
-              <Route path="/dashboard" element={
-                  <AdminRoute>
-                      <Dashboard />
-                  </AdminRoute>
-              } />
-              
-              <Route path="/sales" element={
-               <AuthRoute>
-               <Sales/>
-               </AuthRoute>
-              }/>
-              <Route path="/profile" element={<Account/> }/>
-              <Route path="/login" element={<Login/> }/>
-              <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-          </Router>
-              </AuthProvider>
-      </>
+    <Router>
+      <Routes>
+        <Route path="/dashboard" element={
+        <AdminRoute>
+            <Dashboard />
+            </AdminRoute>
+        }/>
+        
+        <Route path="/sales" element={
+          <AuthRoute>
+            <Sales />
+          </AuthRoute>
+        }/>
+        
+        <Route path="/profile" element={<Account />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </Router>
   );
 }
-export default App
 
-
-
+export default App;
 

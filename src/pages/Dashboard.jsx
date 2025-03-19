@@ -6,13 +6,16 @@ import dashboard from "../assets/dashboard.svg";
 import { useState } from "react";
 import Sales from "./sales/sales.jsx";
 import NavBar from "../components/navBar.jsx";
-import { useAuth } from "../auth/AuthProvider.jsx";
 import Footer from "../components/Footer.jsx";
 import BarCodeScanner from "../components/BarCodeScanner.jsx"; // ✅ Import du scanner
+import { useSelector } from "react-redux";
+import { useAuth } from "../auth/AuthProvider.jsx"; 
 
 function Dashboard() {
     const [choice, setChoice] = useState("dashboard");
-    const { user, profile } = useAuth(); // ✅ Correction des imports
+    const { user } = useSelector((state) => state.auth);
+    const { profile, ploading } = useAuth();
+
 
     return (
         <div>

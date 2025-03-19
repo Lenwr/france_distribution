@@ -9,13 +9,12 @@ import Orders from "../orders/Orders.jsx";
 import AddOrderForm from "../orders/AddOrderForm.jsx";
 import {toast, ToastContainer} from "react-toastify";
 import OrderHistory from "../orders/orderHistory.jsx";
+import { useSelector, useDispatch } from 'react-redux';
+import { getAllArticles } from "../../redux/features/articlesSlice.js";
 
 
 function ProductsList() {
     const {getProducts, deleteProduct} = useProducts();
-    const [articles, setArticles] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [productDetails, setProductDetails] = useState(null);
     const [tabName, setTabName] = useState("stock");
@@ -25,47 +24,42 @@ function ProductsList() {
     const itemsPerPage = 10;
     const [resetState , setResetState]=useState(false)
 
-    const fetchArticles = useCallback(async () => {
-        try {
-            setLoading(true);
-            const data = await getProducts();
-            setArticles(data);
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    }, [getProducts]);
+    //redux
+    const dispatch = useDispatch();
+    const articles = useSelector((state) => state.articles.list); 
+  
+    useEffect(() => {
+      dispatch(getAllArticles());
+    }, [dispatch]);
+
+
+    //redux
+
 
     const handleDelete = async () => {
         try {
             await deleteProduct(productDetails.idArticle);
+            dispatch(getAllArticles()); 
             toast.success("Produit supprimé avec succès !");
         } catch (err) {
             console.error("Error deleting product:", err);
             toast.error("Erreur lors de la suppression du produit.");
         }
-        try {
-            await deleteProduct(productDetails.idArticle);
-        } catch (err) {
-            console.error("Error deleting product:", err);
-        }
     };
 
     const filteredArticles = articles
-        .filter((article) => article.name.toLowerCase().includes(searchTerm.toLowerCase()))
+        .filter((article) =>
+            article.name?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
         .sort((a, b) => a.name.localeCompare(b.name));
 
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
     };
-
-    useEffect(() => {
-        fetchArticles();
-    }, []);
     return (
 
         <div className="products-list flex flex-col items-center bg-cyan-50 bg-opacity-30 min-h-screen  ">
+             <ToastContainer position="top-left"/>
 
             <div className="addProductModal">
                 {/* Open the modal using document.getElementById('ID').showModal() method */}
@@ -89,7 +83,7 @@ function ProductsList() {
                     <dialog id="my_deleteForm" className="modal">
                         <div className="modal-box bg-white">
                             <p className="text-black">Vous êtes sur le point de supprimer l'article  </p>
-                            <ToastContainer position="top-left"/>
+                           
                             <div className="modal-action bg-white text-white">
                                 <button className="btn bg-red-700 border-0 text-white " onClick={handleDelete}>Oui</button>
                                 <form method="dialog">
@@ -195,7 +189,7 @@ function ProductsList() {
             {
                 tabName === "stock" ?
                     <div
-                        className="h-[38em] w-full overflow-x-auto">
+                        className="h-[38em]  p-4  bg-white  w-full overflow-x-auto">
                         <table
                             className=" w-full   ">
                             {/* Table head */}

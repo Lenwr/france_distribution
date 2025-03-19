@@ -1,96 +1,93 @@
 /* eslint-disable */
-import React, {useEffect, useState} from 'react';
-import {useOrders} from "../../hooks/useOrders.js";
-import {Box, SquareArrowDown, Plus} from "lucide-react";
-import AddArticleForm from "../products/addProductForm.jsx";
+import React, { useEffect, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { getAllOrders } from "../../redux/features/ordersSlice.js";
+import { Box, Plus } from "lucide-react";
 import ReceiveForm from "./ReceiveForm.jsx";
 
-
 function Orders() {
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [commandes, setCommandes] = useState([]);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [idArticleSpended, setIdArticleSpended] = useState();
-    const [idQuantitySpended, setIdQuantitySpended] = useState();
-    const {getOrders} = useOrders();
+    const dispatch = useDispatch();
 
-    const fetchCommandes = async () => {
-        try {
-            setLoading(true);
-            const data = await getOrders(); // Appelle la fonction du hook
-            setCommandes(data);
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Récupérer les données depuis Redux
+    const orders = useSelector((state) => state.orders.list);
+    const loading = useSelector((state) => state.orders.loading);
+    const error = useSelector((state) => state.orders.error);
 
+    // États locaux pour gérer l'article sélectionné
+    const [idArticleSpended, setIdArticleSpended] = useState(null);
+    const [idQuantitySpended, setIdQuantitySpended] = useState(null);
 
+    // Charger les commandes au montage du composant
     useEffect(() => {
-        fetchCommandes();
-    }, []);
-
+        dispatch(getAllOrders());
+    }, [dispatch]);
 
     return (
-        <div
-            className="h-[38em] w-full overflow-x-auto">
-            <table
-                className="w-full">
-                {/* Table head */}
-                <thead className="bg-gray-600 border-b  ">
+        <div className="h-[38em] p-4  bg-white w-full overflow-x-auto">
 
-                <tr>
-                    <th scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">Commande</th>
-                    <th scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">quantité</th>
-                    <th scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">Actions</th>
-                </tr>
-                </thead>
-                {/* Table body */}
-                <tbody className="">
-                {commandes.map((article) => (
-                    <tr key={article.id}
-                        className="bg-white  cursor-pointer hover:shadow-2xl  border-b">
-                        <td className="py-2 w-[65%] text-black px-4">{article.name}</td>
-                        <td className={article.quantity < 5 ? "flex flex-row place-items-center h-full text-red-600" : "flex flex-row py-2 text-black px-4 place-items-center"}>
-                            <Box className="mx-2" size={16}/> {article.quantity}</td>
-                        <td  className=" place-items-center ">
-                            {   /*   <SquareArrowDown size={16} className="text-green-700 hover:scale-110" onClick={()=>{
-                                document.getElementById('my_receptionOrderForm').showModal()
-                                setRecipes(article)
-                            }}/> */ }
-                            <span className=" p-2 bg-green-700 text-white rounded " onClick={()=>{
-                                document.getElementById('my_receptionOrderForm').showModal()
-                                setIdArticleSpended(article.idCommande)
-                                setIdQuantitySpended(article.quantity)
-                            }} > Réceptionner</span>
-                            <Plus size={16} className="hidden text-blue-700 hover:scale-110"/>
-                        </td>
-                    </tr>
-                ))}
-                </tbody>
-            </table>
+            {/* Affichage du chargement */}
+            {loading && <p className="text-center text-gray-500">Chargement des commandes...</p>}
 
+            {/* Affichage de l'erreur si nécessaire */}
+            {error && <p className="text-center text-red-500">Erreur : {error}</p>}
 
-            <div className="receptionOrderModal">
-                {/* Open the modal using document.getElementById('ID').showModal() method */}
-                <dialog id="my_receptionOrderForm" className="modal">
-                    <div className="modal-box bg-white text-black">
+            {/* Table des commandes */}
+            {!loading && !error && (
+                <table className="w-full">
+                    <thead className="bg-gray-600 border-b">
+                        <tr>
+                            <th className="text-sm font-medium text-white px-6 py-4 text-left">Commande</th>
+                            <th className="text-sm font-medium text-white px-6 py-4 text-left">Quantité</th>
+                            <th className="text-sm font-medium text-white px-6 py-4 text-left">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {orders.length > 0 ? (
+                            orders.map((article) => (
+                                <tr key={article.id} className="bg-white cursor-pointer hover:shadow-2xl border-b">
+                                    <td className="py-2 w-[65%] text-black px-4">{article.name}</td>
+                                    <td className={`flex flex-row py-2 text-black px-4 place-items-center ${article.quantity < 5 ? "text-red-600" : ""}`}>
+                                        <Box className="mx-2" size={16} /> {article.quantity}
+                                    </td>
+                                    <td className="place-items-center">
+                                        <span
+                                            className="p-2 bg-green-700 text-white rounded cursor-pointer hover:bg-green-800"
+                                            onClick={() => {
+                                                document.getElementById('my_receptionOrderForm').showModal();
+                                                setIdArticleSpended(article.idCommande);
+                                                setIdQuantitySpended(article.quantity);
+                                            }}
+                                        >
+                                            Réceptionner
+                                        </span>
+                                        <Plus size={16} className="hidden text-blue-700 hover:scale-110" />
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="3" className="text-center py-4 text-gray-500">
+                                    Aucune commande disponible.
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            )}
 
-                        <div className="modal-action flex flex-col bg-white items-end ">
-                            <ReceiveForm  idArticleSpended = {idArticleSpended} idQuantitySpended={idQuantitySpended}  />
-                            <form method="dialog">
-                                {/* if there is a button in form, it will close the modal */}
-                                <button className="btn bg-red-700">Fermer</button>
-                            </form>
-                        </div>
+            {/* Modal de réception */}
+            <dialog id="my_receptionOrderForm" className="modal">
+                <div className="modal-box bg-white text-black">
+                    <div className="modal-action flex flex-col bg-white items-end">
+                        <ReceiveForm idArticleSpended={idArticleSpended} idQuantitySpended={idQuantitySpended} />
+                        <form method="dialog">
+                            <button className="btn bg-red-700 text-white hover:bg-red-800">Fermer</button>
+                        </form>
                     </div>
-                </dialog>
-            </div>
+                </div>
+            </dialog>
         </div>
     );
 }
 
 export default Orders;
-
