@@ -172,15 +172,15 @@ function ProductsList() {
             {/* Table of products */}
             <div>
                 <div role="tablist" className="tabs tabs-bordered ">
-                    <a role="tab" className="tab hover:scale-125 duration-500 cursor-pointer text-black" onClick={() => {
+                    <a role="tab" className="tab hover:scale-110 duration-500 cursor-pointer text-black" onClick={() => {
                         setTabName("stock")
                         setPage("Stock")
                     }}>Mon Stock </a>
-                    <a role="tab" className="tab hover:scale-125 duration-500 cursor-pointer text-black " onClick={() => {
+                    <a role="tab" className="tab hover:scale-110 duration-500 cursor-pointer text-black " onClick={() => {
                         setTabName("commandes")
                         setPage("Commandes")
                     }}>Mes commandes</a>
-                    <a role="tab" className="tab hover:scale-125 duration-500 cursor-pointer text-black " onClick={() => {
+                    <a role="tab" className="tab hover:scale-110 duration-500 cursor-pointer text-black " onClick={() => {
                         setTabName("Historique")
                         setPage("Historique")
                     }}>Historique des commandes</a>

@@ -5,10 +5,18 @@ import { useSelector } from "react-redux";
 const AuthRoute = ({ children }) => {
   const { user, loading } = useSelector((state) => state.auth);
 
-  if (loading) return <p>Chargement...</p>;
+  if (loading) {
+    return <p>Chargement...</p>; // Attendre que checkSession finisse
+  }
 
-  return user ? children : <Navigate to="/login" replace />;
+  if (!user) {
+    console.log("Redirection vers /login car user est null");
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
 };
 
 export default AuthRoute;
+
 

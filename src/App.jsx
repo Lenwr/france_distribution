@@ -9,6 +9,8 @@ import Sales from "./pages/sales/sales";
 import Account from "./pages/profile/Account";
 import Login from "./auth/Login";
 import AuthRoute from "./routes/AuthRoute";
+import NotFound from './components/notFound'; // Importez le composant NotFound
+
 import AdminRoute from "./routes/AdminRoute";
 
 function App() {
@@ -35,7 +37,7 @@ function App() {
         
         <Route path="/profile" element={<Account />} />
         <Route path="/login" element={<Login />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<NotFound />} /> {/* Utilisez le composant NotFound */}
       </Routes>
     </Router>
   );
