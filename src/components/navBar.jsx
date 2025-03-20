@@ -1,16 +1,20 @@
 /* eslint-disable */
 import React from 'react';
-import {useSelector} from "react-redux"
+import {useSelector,useDispatch} from "react-redux"
 import {supabase} from "../hooks/useSupabase.js";
 import {useNavigate} from "react-router-dom";
+import { logoutUser } from "../redux/features/authSlice.js";
 
 function NavBar(props) {
     const { user } = useSelector((state) => state.auth);
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
-    const handleLogout = async () => {
-        await supabase.auth.signOut();
-       navigate('/login'); // Rediriger après déconnexion
+    const handleLogout = async () => { 
+        if (user) {
+            await dispatch(logoutUser()); // Déclencher la déconnexion via Redux
+            navigate("/login"); // Rediriger après la déconnexion
+        }
     };
     return (
         <div>

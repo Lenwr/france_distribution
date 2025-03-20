@@ -23,7 +23,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/dashboard" element={
+        <Route path="/" element={
         <AuthRoute>
             <Dashboard />
        </AuthRoute>

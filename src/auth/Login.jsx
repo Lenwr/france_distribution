@@ -1,39 +1,33 @@
 /* eslint-disable */
 import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom"; 
+import { loginUser } from "../redux/features/authSlice";
 import { supabase } from "../hooks/useSupabase.js";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+
     const [showPassword, setShowPassword] = useState(false);
-
-
+    const dispatch = useDispatch();
     
     const navigate = useNavigate();
-
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError(null);
-
-        try {
-            const { error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
-            if (error) throw error;
-
-            alert("Connexion réussie !");
-            navigate("/dashboard"); 
-        } catch (err) {
-            setError(err.message);
-        }
-        setLoading(false);
-    };
+    const { loading, error, user } = useSelector((state) => state.auth); // Récupération de l'état Re
+       
+    
+        const handleLogin = async (e) => {
+            e.preventDefault();
+    
+            const result = await dispatch(loginUser({ email, password }));
+    
+            if (result.meta.requestStatus === "fulfilled") {
+                alert("Connexion réussie !");
+                navigate("/"); // Redirige après succès
+            }
+        };
+    
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100 relative">
@@ -105,10 +99,7 @@ export default function Login() {
                 )}
 
                 {/* Lien d'inscription */}
-                <p className="text-gray-500 text-center mt-6">
-                    Pas encore de compte ? <a href="/signup"
-                                              className="text-blue-600 font-medium hover:underline">Inscrivez-vous</a>
-                </p>
+                
             </div>
         </div>
     );

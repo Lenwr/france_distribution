@@ -11,7 +11,7 @@ const AuthRoute = ({ children }) => {
 
   if (!user) {
     console.log("Redirection vers /login car user est null");
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return children;
