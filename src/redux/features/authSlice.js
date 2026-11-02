@@ -1,153 +1,48 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { supabase } from "../../hooks/useSupabase";
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { firebaseAuth } from '../../services/firebaseClient.js';
 
-// Action asynchrone pour la connexion
-export const loginUser = createAsyncThunk(
-  "auth/loginUser",
-  async ({ email, password }, { rejectWithValue }) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      // Récupération du profil après connexion
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", data.user.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      // Stocker les informations dans le localStorage
-      const userData = { user: data.user, role: profileData?.role || "user" };
-      localStorage.setItem("user", JSON.stringify(userData.user));
-      localStorage.setItem("role", userData.role);
-
-      return userData;
-    } catch (error) {
-      return rejectWithValue(error.message);
-    }
+export const loginUser = createAsyncThunk('auth/loginUser', async (credentials, { rejectWithValue }) => {
+  try { await signInWithEmailAndPassword(firebaseAuth, credentials.email.trim(), credentials.password); }
+  catch (error) {
+    const messages = {
+      'auth/invalid-credential': 'Email ou mot de passe incorrect. Utilisez un compte créé dans ce projet Firebase.',
+      'auth/user-not-found': 'Email ou mot de passe incorrect. Utilisez un compte créé dans ce projet Firebase.',
+      'auth/wrong-password': 'Email ou mot de passe incorrect. Utilisez un compte créé dans ce projet Firebase.',
+      'auth/invalid-email': 'Vérifiez le format de votre adresse email.',
+      'auth/operation-not-allowed': 'La connexion par email et mot de passe est désactivée. Votre administrateur doit l’activer dans Firebase Authentication.',
+      'auth/configuration-not-found': 'Firebase Authentication n’est pas encore configuré pour ce projet. Contactez votre administrateur.',
+      'auth/invalid-api-key': 'La configuration Firebase de l’application est incorrecte. Contactez votre administrateur.',
+      'auth/user-disabled': 'Ce compte est désactivé. Contactez votre administrateur.',
+      'auth/too-many-requests': 'Trop de tentatives de connexion. Patientez avant de réessayer.',
+      'auth/network-request-failed': 'Impossible de joindre Firebase. Vérifiez votre connexion Internet puis réessayez.',
+    };
+    return rejectWithValue(messages[error.code] || 'Connexion impossible. Réessayez ou contactez votre administrateur.');
   }
-);
-
-// Action asynchrone pour la déconnexion
-export const logoutUser = createAsyncThunk("auth/logoutUser", async () => {
-  await supabase.auth.signOut();
-  localStorage.removeItem("user");
-  localStorage.removeItem("role");
 });
 
-// Vérification de la session actuelle
-export const checkSession = createAsyncThunk(
-  "auth/checkSession",
-  async (_, { rejectWithValue }) => {
-    try {
-      // Vérifier si les données existent dans localStorage
-      const storedUser = localStorage.getItem("user");
-      const storedRole = localStorage.getItem("role");
+export const logoutUser = createAsyncThunk('auth/logoutUser', async (_, { rejectWithValue }) => {
+  try { await signOut(firebaseAuth); }
+  catch { return rejectWithValue('La déconnexion a échoué. Réessayez.'); }
+});
 
-      if (storedUser && storedRole) {
-        const user = JSON.parse(storedUser);
-        
-        // Vérifier si le rôle dans la base de données correspond toujours
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single();
-
-        if (profileError) throw profileError;
-
-        if (profileData?.role === storedRole) {
-          return { user, role: storedRole };
-        } else {
-          localStorage.removeItem("user");
-          localStorage.removeItem("role");
-          return null;
-        }
-      } else {
-        // Vérifier directement auprès de Supabase
-        const { data, error } = await supabase.auth.getUser();
-        if (error || !data.user) return null;
-
-        // Récupérer les infos du profil
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", data.user.id)
-          .single();
-
-        if (profileError) throw profileError;
-
-        const userData = { user: data.user, role: profileData?.role || "user" };
-
-        // Sauvegarder dans localStorage
-        localStorage.setItem("user", JSON.stringify(userData.user));
-        localStorage.setItem("role", userData.role);
-
-        return userData;
-      }
-    } catch (error) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
-
-// État initial avec récupération de localStorage
-const storedUser = localStorage.getItem("user");
-const storedRole = localStorage.getItem("role");
-
-const initialState = {
-  user: storedUser ? JSON.parse(storedUser) : null,
-  role: storedRole || null,
-  loading: false,
-  error: null,
-};
-
-// Slice Redux
+const initialState = { user: null, profile: null, role: null, loading: true, error: null };
 const authSlice = createSlice({
-  name: "auth",
-  initialState,
-  reducers: {},
+  name: 'auth', initialState,
+  reducers: {
+    sessionPending: () => ({ ...initialState }),
+    sessionChanged: (_, { payload }) => ({
+      user: payload.user, profile: payload.profile, role: payload.profile?.role ?? null, loading: false, error: null,
+    }),
+    sessionCleared: (_, { payload }) => ({ ...initialState, loading: false, error: payload ?? null }),
+  },
   extraReducers: (builder) => {
     builder
-      // Connexion
-      .addCase(loginUser.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(loginUser.fulfilled, (state, action) => {
-        state.loading = false;
-        state.user = action.payload.user;
-        state.role = action.payload.role;
-      })
-      .addCase(loginUser.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-      // Déconnexion
-      .addCase(logoutUser.fulfilled, (state) => {
-        state.user = null;
-        state.role = null;
-      })
-      // Vérification de session
-      .addCase(checkSession.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(checkSession.fulfilled, (state, action) => {
-        state.loading = false;
-        state.user = action.payload?.user || null;
-        state.role = action.payload?.role || null;
-      })
-      .addCase(checkSession.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      });
+      .addCase(loginUser.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(loginUser.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
+      .addCase(logoutUser.fulfilled, () => ({ ...initialState, loading: false }))
+      .addCase(logoutUser.rejected, (state, action) => { state.error = action.payload; });
   },
 });
-
+export const { sessionPending, sessionChanged, sessionCleared } = authSlice.actions;
 export default authSlice.reducer;

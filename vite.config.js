@@ -8,4 +8,24 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    proxy: {
+      '/api/upcitemdb': {
+        target: 'https://api.upcitemdb.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/upcitemdb/, '/prod/trial/lookup'),
+      },
+    },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router', 'react-router-dom'],
+          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+          pdf: ['jspdf', 'jspdf-autotable', 'html2canvas'],
+        },
+      },
+    },
+  },
 })

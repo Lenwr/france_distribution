@@ -1,164 +1,69 @@
-/* eslint-disable */
-import { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { addNewArticle } from "../../redux/features/articlesSlice";
-import BarcodeScannerComponent from "react-qr-barcode-scanner";
-import { fetchProduct } from "../../redux/services/articlesService";
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { addNewArticle } from '../../redux/features/articlesSlice.js';
+import { fetchProduct } from '../../redux/services/articlesService.js';
+import { validPrice } from '../../services/inventoryService.js';
+import { formatPurchaseEur, formatEurFromXof } from '../../services/currency.js';
+const BarcodeScanner = lazy(() => import('react-qr-barcode-scanner'));
 
-const AddArticleForm = ({ resetState, setResetState }) => {
-    const dispatch = useDispatch();
-    const { loading, error } = useSelector((state) => state.articles);
-
-    const [name, setName] = useState('');
-    const [price, setPrice] = useState('');
-    const [message, setMessage] = useState('');
-    const [data, setData] = useState("");
-    const [product, setProduct] = useState();
-    const [notFound, setNotFound] = useState(false);
-    const [isScanning, setIsScanning] = useState(false);
-    const [isBarcodeInputActive, setIsBarcodeInputActive] = useState(false);
-    const [scanCode, setScanCode] = useState("");
-
-    // Fetch du produit via OpenFoodFacts si un code-barres est scanné
-    useEffect(() => {
-        if (data) {
-            handleFetchProduct(data);
-        }
-    }, [data]);
-
-    const handleFetchProduct = async (ean) => {
-        try {
-            const productData = await fetchProduct(ean);
-            if (productData) {
-                setProduct(productData);
-                setName(productData.product_name || "");
-                setNotFound(false);
-                console.log(product)
-            } else {
-                setProduct(null);
-                setNotFound(true);
-                setName("");
-            }
-        } catch (error) {
-            console.error("Erreur lors de la récupération :", error);
-        }
-    };
-
-    // Ajout d'un article via Redux
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        if (!name.trim()) {
-            setMessage("Le nom de l'article ne peut pas être vide.");
-            return;
-        }
-        if (!price || isNaN(price) || parseFloat(price) < 0) {
-            setMessage("Veuillez entrer un prix valide.");
-            setPrice("0");
-            return;
-        }
-
-        const newArticle = {
-            name,
-            price: parseFloat(price),
-            code_ref: data.replace(/\D/g, ""),
-            suppliers: product?.brands,
-        };
-
-        dispatch(addNewArticle(newArticle)).then((result) => {
-            if (result.meta.requestStatus === "fulfilled") {
-                resetFields();
-                setMessage("Article ajouté avec succès !");
-            } else {
-                setMessage("Erreur lors de l'ajout de l'article.");
-            }
-        });
-    };
-
-    const resetFields = () => {
-        setName("");
-        setPrice("");
-        setData("");
-        setProduct(null);
-        setNotFound(false);
-        setMessage("");
-        setIsScanning(false)
-    };
-
-    return (
-        <div className="container flex flex-col items-center p-6 bg-white">
-            <h2 className="text-2xl text-black font-bold mb-4">Ajouter un article</h2>
-
-            {/* Scanner */}
-            <button onClick={() => setIsScanning(!isScanning)} className="btn bg-gray-600 text-white border-0 mb-2">
-                {isScanning ? "Arrêter le scan" : "Ajouter par scan"}
-            </button>
-
-            {/* Scanner manuel */}
-            <button onClick={() => setIsBarcodeInputActive(!isBarcodeInputActive)} className="btn bg-blue-600 text-white border-0">
-                {isBarcodeInputActive ? "Arrêter le mode barcode" : "Utiliser barcode"}
-            </button>
-
-            {isScanning && (
-                <div className="bg-white shadow-lg rounded-lg my-4">
-                    <BarcodeScannerComponent
-                        onUpdate={(err, result) => {
-                            if (result) {
-                                setData(result.text);
-                            }
-                        }}
-                    />
-                    <p className="mt-4 text-center text-black text-lg font-semibold">
-                        Code scanné : <span className="text-blue-500">{data || "Aucun code détecté"}</span>
-                    </p>
-                </div>
-            )}
-
-            {/* Produit trouvé ou non trouvé */}
-            {product ? (
-                <div className="mt-6 p-4 bg-white shadow-lg rounded-lg w-80 text-center">
-                    <h3 className="text-xl text-black font-bold">{product.product_name}</h3>
-                    <p className="text-gray-700"><strong>Marque :</strong> {product.brands}</p>
-                    <p className="text-gray-700"><strong>Catégorie :</strong> {product.categories}</p>
-                </div>
-            ) : notFound ? (
-                <div className="mt-6 p-4 bg-red-100 shadow-lg rounded-lg w-80 text-center">
-                    <h3 className="text-xl text-black font-bold">Produit non trouvé !</h3>
-                    <p className="text-gray-700">Ajoutez un nom pour l'enregistrer.</p>
-                </div>
-            ) : null}
-
-            {/* Formulaire */}
-            <form onSubmit={handleSubmit} className="w-full max-w-md mt-8">
-                <div className="mb-4">
-                    <label className="block text-gray-700">Nom de l'article</label>
-                    <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Nom de l'article"
-                        className="w-full bg-white p-2 border rounded"
-                        disabled={!notFound && !product}
-                    />
-                </div>
-                <div className="mb-4">
-                    <label className="block text-gray-700">Prix</label>
-                    <input
-                        type="number"
-                        value={price}
-                        onChange={(e) => setPrice(e.target.value)}
-                        placeholder="Prix"
-                        className="w-full bg-white p-2 border rounded"
-                    />
-                </div>
-                <button className="w-full bg-green-700 text-white p-2 rounded" type="submit" disabled={loading || !name || !price}>
-                    {loading ? "Ajout en cours..." : "Ajouter"}
-                </button>
-            </form>
-
-            {message && <p className="mt-4 text-red-500">{message}</p>}
-        </div>
-    );
-};
-
-export default AddArticleForm;
+export default function AddArticleForm() {
+  const dispatch = useDispatch();
+  const [name, setName] = useState('');
+  const [price, setPrice] = useState('');
+  const [sellPrice, setSellPrice] = useState('');
+  const [code, setCode] = useState('');
+  const [supplier, setSupplier] = useState('');
+  const [scanning, setScanning] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  const lock = useRef(false);
+  const searchVersion = useRef(0);
+  useEffect(() => () => { searchVersion.current++; }, []);
+  async function lookup(value) {
+    const version = ++searchVersion.current;
+    const barcode = value.trim();
+    if (!/^\d{8,14}$/.test(barcode)) { setMessage('Saisissez un code-barres de 8 à 14 chiffres.'); return; }
+    setCode(barcode);
+    setScanning(false);
+    setMessage('Recherche du produit…');
+    setSupplier('');
+    try {
+      const product = await fetchProduct(barcode);
+      if (version !== searchVersion.current) return;
+      setName(product?.product_name ?? '');
+      setSupplier(product?.brands ?? '');
+      setMessage(product ? 'Produit trouvé. Vérifiez les informations avant de l’ajouter.' : 'Produit non trouvé. Saisissez ses informations manuellement.');
+    } catch {
+      if (version === searchVersion.current) setMessage('Recherche indisponible. Vous pouvez saisir le produit manuellement.');
+    }
+  }
+  async function submit(event) {
+    event.preventDefault();
+    if (lock.current) return;
+    lock.current = true;
+    setBusy(true);
+    try {
+      if (!name.trim()) throw new Error('Le nom de l’article est obligatoire.');
+      if (code && !/^\d{8,14}$/.test(code.trim())) throw new Error('Le code-barres doit contenir 8 à 14 chiffres.');
+      await dispatch(addNewArticle({ name: name.trim(), price: validPrice(price, true), sell_price: validPrice(sellPrice),
+        code_ref: code.trim(), suppliers: supplier.trim(), quantity: 0 })).unwrap();
+      searchVersion.current++;
+      setName(''); setPrice(''); setSellPrice(''); setCode(''); setSupplier(''); setScanning(false);
+      setMessage('Article ajouté. Réceptionnez une commande pour alimenter le stock.');
+    } catch (error) { setMessage(typeof error === 'string' ? error : error.message); }
+    finally { lock.current = false; setBusy(false); }
+  }
+  return <section className="p-4 text-black"><h2 className="text-xl font-bold mb-4">Ajouter un article</h2>
+    <button className="btn mb-4" onClick={() => setScanning(!scanning)} disabled={busy}>{scanning ? 'Arrêter le scan' : 'Scanner avec la caméra'}</button>
+    {scanning && <div className="barcode-scanner" aria-label="Lecteur de code-barres"><Suspense fallback={<p role="status">Chargement de la caméra…</p>}><BarcodeScanner width="100%" height={260} facingMode="environment" videoConstraints={{ facingMode: { ideal: 'environment' } }} stopStream={!scanning} delay={300} onError={(error) => { setScanning(false); const detail = error?.name === 'NotAllowedError' ? 'Autorisez l’accès à la caméra dans votre navigateur, puis réessayez.' : 'Caméra inaccessible. Vérifiez que le site est en HTTPS ou sur localhost.'; setMessage(detail); }} onUpdate={(_, result) => { if (result) lookup(typeof result.getText === 'function' ? result.getText() : result.text); }} /></Suspense><p className="barcode-hint">Placez le code-barres dans le cadre. Si la caméra ne fonctionne pas, saisissez le code manuellement ci-dessous.</p></div>}
+    <form onSubmit={submit} className="flex flex-col gap-4">
+      <label>Code-barres (facultatif)<input className="input input-bordered w-full" inputMode="numeric" autoFocus value={code} onChange={(event) => { searchVersion.current++; setCode(event.target.value.replace(/\D/g, '')); }} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); lookup(event.currentTarget.value); } }} placeholder="Scannez puis appuyez sur Entrée" disabled={busy} /></label>
+      <button type="button" className="btn" disabled={busy || !code} onClick={() => lookup(code)}>Rechercher les informations du produit</button>
+      <label>Nom de l’article<input className="input input-bordered w-full" required value={name} onChange={(event) => { searchVersion.current++; setName(event.target.value); }} disabled={busy} /></label>
+      <label>Marque ou fournisseur<input className="input input-bordered w-full" value={supplier} onChange={(event) => setSupplier(event.target.value)} disabled={busy} /></label>
+      <label>Prix d’achat (EUR)<input className="input input-bordered w-full" type="number" min="0" step="0.01" required value={price} onChange={(event) => setPrice(event.target.value)} disabled={busy} />{price && <small className="currency-equivalent">{formatPurchaseEur(price)}</small>}</label>
+      <label>Prix de vente (FCFA)<input className="input input-bordered w-full" type="number" min="0.01" step="0.01" required value={sellPrice} onChange={(event) => setSellPrice(event.target.value)} disabled={busy} />{sellPrice && <small className="currency-equivalent">≈ {formatEurFromXof(sellPrice)}</small>}</label>
+      <button className="btn bg-green-700 text-white" disabled={busy}>{busy ? 'Ajout…' : 'Ajouter l’article'}</button>
+    </form>{message && <p role="status" className="mt-4">{message}</p>}
+  </section>;
+}

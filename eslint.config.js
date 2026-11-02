@@ -5,9 +5,9 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default [
-  { ignores: ['dist'] },
+  { ignores: ['dist', 'playwright-report', 'test-results'] },
   {
-    files: ['**/*.{js,jsx}'],
+    files: ['**/*.{js,jsx,mjs}'],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
@@ -35,4 +35,5 @@ export default [
       ],
     },
   },
+  { files: ['scripts/**/*.mjs', 'tests/**/*.js', 'playwright.config.js'], languageOptions: { globals: globals.node } },
 ]

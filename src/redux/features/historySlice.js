@@ -1,11 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { fetchHistory} from '../services/historyServices';
 
 // Action asynchrone pour récupérer les articles
 export const getHistory = createAsyncThunk(
   'history/fetchAll',
   async (_, { rejectWithValue }) => {
     try {
+      const { fetchHistory } = await import('../services/historyServices.js');
       return await fetchHistory();
     } catch (error) {
       return rejectWithValue(error.message);

@@ -1,114 +1,39 @@
-/* eslint-disable */
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from "react-redux";
-import { getAllArticles } from "../../redux/features/articlesSlice.js";
-import { getAllOrders, addOrUpdateOrder } from "../../redux/features/ordersSlice.js";
-
-const AddOrderForm = () => {
-    const dispatch = useDispatch();
-    const articles = useSelector((state) => state.articles.list);
-    const { loading, error } = useSelector((state) => state.orders);
-
-    const [quantity, setQuantity] = useState('');
-    const [message, setMessage] = useState('');
-    const [searchTerm, setSearchTerm] = useState("");
-    const [isFocused, setIsFocused] = useState(false);
-    const [selectedArticle, setSelectedArticle] = useState(null);
-
-    useEffect(() => {
-        dispatch(getAllArticles());
-    }, [dispatch]);
-
-    const filteredArticles = articles.filter(article =>
-        article.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        if (!quantity || quantity <= 0) {
-            setMessage('Veuillez entrer une quantité valide.');
-            return;
-        }
-
-        if (!selectedArticle) {
-            setMessage('Veuillez sélectionner un article.');
-            return;
-        }
-
-        const newOrder = {
-            idArticle: selectedArticle,
-            quantity: parseInt(quantity, 10),
-            name: searchTerm,
-        };
-
-        dispatch(addOrUpdateOrder(newOrder)).then((result) => {
-            if (result.meta.requestStatus === "fulfilled") {
-                dispatch(getAllOrders());
-                setMessage("Commande ajoutée ou mise à jour avec succès !");
-                resetFields();
-            } else {
-                setMessage("Erreur lors de l'ajout de la commande.");
-            }
-        });
-    };
-
-    const resetFields = () => {
-        setQuantity("");
-        setSearchTerm("");
-        setSelectedArticle(null);
-    };
-
-    return (
-        <div>
-            <div className="container">
-                <h2 className="m-2">Faire une nouvelle Commande</h2>
-                <form onSubmit={handleSubmit}>
-                    <div className="relative w-[30em]">
-                        <input
-                            type="text"
-                            placeholder="Rechercher un article..."
-                            className="input input-bordered w-full bg-white mb-2"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            onFocus={() => setIsFocused(true)}
-                            onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-                        />
-                        {isFocused && searchTerm && (
-                            <div className="absolute bg-white w-full max-h-[15em] overflow-y-scroll rounded-box shadow-lg z-10">
-                                {filteredArticles.length > 0 ? (
-                                    filteredArticles.map((article) => (
-                                        <div
-                                            className="p-2 hover:bg-cyan-50 cursor-pointer"
-                                            key={article.id}
-                                            onClick={() => {
-                                                setSearchTerm(article.name);
-                                                setSelectedArticle(article.idArticle);
-                                                setIsFocused(false);
-                                            }}
-                                        >
-                                            {article.name}
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="p-2 text-gray-500">Aucun article trouvé</div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    <label className="my-4 input input-bordered flex bg-white items-center gap-2">
-                        <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Quantité" className="grow"/>
-                    </label>
-
-                    <button className="mt-4 text-white btn bg-green-700" type="submit" disabled={loading}>
-                        {loading ? "Ajout en cours..." : "Ajouter"}
-                    </button>
-                </form>
-                {message && <p className="mt-4 text-red-500">{message}</p>}
-            </div>
-        </div>
-    );
-};
-
-export default AddOrderForm;
+import { useRef, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { addOrUpdateOrder, getAllOrders } from '../../redux/features/ordersSlice.js';
+export default function AddOrderForm() {
+  const dispatch = useDispatch();
+  const articles = useSelector((state) => state.articles.list);
+  const [selected, setSelected] = useState('');
+  const [search, setSearch] = useState('');
+  const [quantity, setQuantity] = useState('');
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+  const lock = useRef(false);
+  const attempt = useRef(null);
+  async function submit(event) {
+    event.preventDefault();
+    if (lock.current) return;
+    lock.current = true; setBusy(true);
+    if (!attempt.current) attempt.current = { idArticle: selected, quantity: Number(quantity), operationId: crypto.randomUUID() };
+    try {
+      await dispatch(addOrUpdateOrder(attempt.current)).unwrap();
+      attempt.current = null;
+      setQuantity(''); setSelected(''); setSearch('');
+      setMessage('Commande enregistrée.');
+      dispatch(getAllOrders());
+    } catch (error) { setMessage(`${typeof error === 'string' ? error : error.message} Vous pouvez réessayer cette même commande.`); }
+    finally { lock.current = false; setBusy(false); }
+  }
+  return <section><h2 className="text-xl font-bold">Nouvelle commande</h2>
+    {!articles.length && <p>Créez d’abord un article dans le stock.</p>}
+    <form onSubmit={submit} className="flex flex-col gap-4 mt-4">
+      <label>Rechercher un article<input className="input input-bordered w-full" value={search} disabled={busy || Boolean(attempt.current)} onChange={(event) => { setSearch(event.target.value); setSelected(''); }} /></label>
+      <label>Article<select className="select select-bordered w-full" required value={selected} disabled={busy || Boolean(attempt.current)} onChange={(event) => setSelected(event.target.value)}>
+        <option value="">Sélectionner un article</option>{articles.filter((item) => item.name.toLowerCase().includes(search.toLowerCase())).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+      </select></label>
+      <label>Quantité<input className="input input-bordered w-full" type="number" min="1" step="1" required value={quantity} disabled={busy || Boolean(attempt.current)} onChange={(event) => setQuantity(event.target.value)} /></label>
+      <button className="btn bg-green-700 text-white" disabled={busy || !selected || !quantity}>{busy ? 'Enregistrement…' : 'Ajouter la commande'}</button>
+    </form>{message && <p role="status" className="mt-4">{message}</p>}
+  </section>;
+}

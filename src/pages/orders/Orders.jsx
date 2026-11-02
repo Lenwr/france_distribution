@@ -1,93 +1,26 @@
-/* eslint-disable */
-import React, { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { getAllOrders } from "../../redux/features/ordersSlice.js";
-import { Box, Plus } from "lucide-react";
-import ReceiveForm from "./ReceiveForm.jsx";
+import { getAllOrders } from '../../redux/features/ordersSlice.js';
+import ReceiveForm from './ReceiveForm.jsx';
 
-function Orders() {
-    const dispatch = useDispatch();
-
-    // Récupérer les données depuis Redux
-    const orders = useSelector((state) => state.orders.list);
-    const loading = useSelector((state) => state.orders.loading);
-    const error = useSelector((state) => state.orders.error);
-
-    // États locaux pour gérer l'article sélectionné
-    const [idArticleSpended, setIdArticleSpended] = useState(null);
-    const [idQuantitySpended, setIdQuantitySpended] = useState(null);
-
-    // Charger les commandes au montage du composant
-    useEffect(() => {
-        dispatch(getAllOrders());
-    }, [dispatch]);
-
-    return (
-        <div className="h-[38em] p-4  bg-white w-full overflow-x-auto">
-
-            {/* Affichage du chargement */}
-            {loading && <p className="text-center text-gray-500">Chargement des commandes...</p>}
-
-            {/* Affichage de l'erreur si nécessaire */}
-            {error && <p className="text-center text-red-500">Erreur : {error}</p>}
-
-            {/* Table des commandes */}
-            {!loading && !error && (
-                <table className="w-full">
-                    <thead className="bg-gray-600 border-b">
-                        <tr>
-                            <th className="text-sm font-medium text-white px-6 py-4 text-left">Commande</th>
-                            <th className="text-sm font-medium text-white px-6 py-4 text-left">Quantité</th>
-                            <th className="text-sm font-medium text-white px-6 py-4 text-left">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {orders.length > 0 ? (
-                            orders.map((article) => (
-                                <tr key={article.id} className="bg-white cursor-pointer hover:shadow-2xl border-b">
-                                    <td className="py-2 w-[65%] text-black px-4">{article.name}</td>
-                                    <td className={`flex flex-row py-2 text-black px-4 place-items-center ${article.quantity < 5 ? "text-red-600" : ""}`}>
-                                        <Box className="mx-2" size={16} /> {article.quantity}
-                                    </td>
-                                    <td className="place-items-center">
-                                        <span
-                                            className="p-2 bg-green-700 text-white rounded cursor-pointer hover:bg-green-800"
-                                            onClick={() => {
-                                                document.getElementById('my_receptionOrderForm').showModal();
-                                                setIdArticleSpended(article.idCommande);
-                                                setIdQuantitySpended(article.quantity);
-                                            }}
-                                        >
-                                            Réceptionner
-                                        </span>
-                                        <Plus size={16} className="hidden text-blue-700 hover:scale-110" />
-                                    </td>
-                                </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan="3" className="text-center py-4 text-gray-500">
-                                    Aucune commande disponible.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            )}
-
-            {/* Modal de réception */}
-            <dialog id="my_receptionOrderForm" className="modal">
-                <div className="modal-box bg-white text-black">
-                    <div className="modal-action flex flex-col bg-white items-end">
-                        <ReceiveForm idArticleSpended={idArticleSpended} idQuantitySpended={idQuantitySpended} />
-                        <form method="dialog">
-                            <button className="btn bg-red-700 text-white hover:bg-red-800">Fermer</button>
-                        </form>
-                    </div>
-                </div>
-            </dialog>
-        </div>
-    );
+export default function Orders() {
+  const dispatch = useDispatch();
+  const { list: orders, loading, error } = useSelector((state) => state.orders);
+  const [selected, setSelected] = useState(null);
+  const [message, setMessage] = useState('');
+  const dialog = useRef(null);
+  useEffect(() => { dispatch(getAllOrders()); }, [dispatch]);
+  return <section className="p-4 bg-white w-full">
+    {loading && <p role="status">Chargement des commandes…</p>}
+    {error && <p role="alert">{error}</p>}
+    {message && <p role="status">{message}</p>}
+    <div className="overflow-x-auto"><table className="table w-full"><thead><tr><th>Commande</th><th>Quantité restante</th><th>Actions</th></tr></thead><tbody>
+      {orders.map((order) => <tr key={order.id}><td>{order.name}</td><td>{order.quantity}</td><td><button className="btn bg-green-700 text-white" onClick={() => { setSelected(order); dialog.current.showModal(); }}>Réceptionner</button></td></tr>)}
+      {!loading && !error && !orders.length && <tr><td colSpan="3">Aucune commande en cours. Créez une commande pour alimenter votre stock.</td></tr>}
+    </tbody></table></div>
+    <dialog ref={dialog} className="modal" onClose={() => setSelected(null)}><div className="modal-box bg-white text-black">
+      {selected && <ReceiveForm key={selected.id} order={selected} onReceived={() => { setMessage('Commande réceptionnée avec succès.'); dialog.current.close(); }} />}
+      <form method="dialog" className="modal-action"><button className="btn">Fermer</button></form>
+    </div></dialog>
+  </section>;
 }
-
-export default Orders;

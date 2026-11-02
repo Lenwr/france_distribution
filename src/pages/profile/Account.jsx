@@ -1,106 +1,87 @@
-/* eslint-disable */
-import { useState, useEffect } from 'react'
-import {supabase} from "../../hooks/useSupabase.js"
+import { useEffect, useState } from "react";
+import { supabase } from "../../hooks/useSupabase.js";
+import { useAuth } from "../../auth/AuthProvider.jsx";
 
-export default function Account({ session }) {
-    const [loading, setLoading] = useState(true)
-    const [username, setUsername] = useState(null)
-    const [website, setWebsite] = useState(null)
-    const [avatar_url, setAvatarUrl] = useState(null)
+export default function Account() {
+    const { user, profile } = useAuth();
+    const [loading, setLoading] = useState(false);
+    const [username, setUsername] = useState("");
+    const [website, setWebsite] = useState("");
+    const [avatarUrl, setAvatarUrl] = useState("");
+    const [message, setMessage] = useState("");
 
     useEffect(() => {
-        let ignore = false
-        async function getProfile() {
-            setLoading(true)
-            const { user } = session
+        setUsername(profile?.username || "");
+        setWebsite(profile?.website || "");
+        setAvatarUrl(profile?.avatar_url || "");
+    }, [profile]);
 
-            const { data, error } = await supabase
-                .from('profiles')
-                .select(`username, website, avatar_url`)
-                .eq('id', user.id)
-                .single()
+    async function updateProfile(event) {
+        event.preventDefault();
 
-            if (!ignore) {
-                if (error) {
-                    console.warn(error)
-                } else if (data) {
-                    setUsername(data.username)
-                    setWebsite(data.website)
-                    setAvatarUrl(data.avatar_url)
-                }
-            }
-
-            setLoading(false)
+        if (!user) {
+            setMessage("Utilisateur non connecté.");
+            return;
         }
 
-        getProfile()
-
-        return () => {
-            ignore = true
-        }
-    }, [session])
-
-    async function updateProfile(event, avatarUrl) {
-        event.preventDefault()
-
-        setLoading(true)
-        const { user } = session
+        setLoading(true);
+        setMessage("");
 
         const updates = {
-            id: user.id,
             username,
             website,
             avatar_url: avatarUrl,
-            updated_at: new Date(),
-        }
+            updated_at: new Date().toISOString(),
+        };
 
-        const { error } = await supabase.from('profiles').upsert(updates)
+        const { error } = profile
+            ? await supabase.from("profiles").update(updates).eq("id", user.id)
+            : await supabase.from("profiles").upsert({ id: user.id, role: "user", ...updates });
 
-        if (error) {
-            alert(error.message)
-        } else {
-            setAvatarUrl(avatarUrl)
-        }
-        setLoading(false)
+        setLoading(false);
+        setMessage(error ? error.message : "Profil mis à jour.");
     }
 
     return (
-        <form onSubmit={updateProfile} className="form-widget">
-            <div>
-                <label htmlFor="email">Email</label>
-                <input id="email" type="text" value={session.user.email} disabled />
-            </div>
-            <div>
-                <label htmlFor="username">Name</label>
-                <input
-                    id="username"
-                    type="text"
-                    required
-                    value={username || ''}
-                    onChange={(e) => setUsername(e.target.value)}
-                />
-            </div>
-            <div>
-                <label htmlFor="website">Website</label>
-                <input
-                    id="website"
-                    type="url"
-                    value={website || ''}
-                    onChange={(e) => setWebsite(e.target.value)}
-                />
-            </div>
+        <main className="profile-page"><div className="page-heading"><div><p className="eyebrow">VOTRE ESPACE</p><h1>Mon profil</h1><p className="page-description">Les informations de votre compte professionnel.</p></div></div>
+            <form onSubmit={updateProfile} className="profile-card flex flex-col gap-4">
+                <h2 className="text-xl font-bold">Informations personnelles</h2>
 
-            <div>
-                <button className="button block primary" type="submit" disabled={loading}>
-                    {loading ? 'Loading ...' : 'Update'}
-                </button>
-            </div>
+                <label className="flex flex-col gap-1">
+                    Email
+                    <input className="input input-bordered bg-gray-100" type="email" value={user?.email || ""} disabled />
+                </label>
 
-            <div>
-                <button className="button block" type="button" onClick={() => supabase.auth.signOut()}>
-                    Sign Out
-                </button>
-            </div>
-        </form>
-    )
+                <label className="flex flex-col gap-1">
+                    Nom
+                    <input
+                        className="input input-bordered bg-white"
+                        type="text"
+                        required
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                    />
+                </label>
+
+                <label className="flex flex-col gap-1">
+                    Site web
+                    <input
+                        className="input input-bordered bg-white"
+                        type="url"
+                        value={website}
+                        onChange={(e) => setWebsite(e.target.value)}
+                    />
+                </label>
+
+                <div className="flex flex-wrap gap-3">
+                    <button className="btn bg-green-700 text-white" type="submit" disabled={loading}>
+                        {loading ? "Mise à jour..." : "Mettre à jour"}
+                    </button>
+
+                </div>
+
+                {message && <p role="status" className="text-sm text-gray-700">{message}</p>}
+            </form>
+        </main>
+    );
 }

@@ -1,267 +1,71 @@
-/* eslint-disable */
-import AddArticleForm from "./addProductForm.jsx";
-import {useProducts} from "../../hooks/useProduct.js";
-import {useCallback, useEffect, useState} from "react";
-import ProductDetails from "./productDetails.jsx";
-import {Box, ReceiptText, CircleX, Trash2, Pencil} from 'lucide-react';
-import {Link, useLocation, useNavigate} from "react-router-dom";
-import Orders from "../orders/Orders.jsx";
-import AddOrderForm from "../orders/AddOrderForm.jsx";
-import {toast, ToastContainer} from "react-toastify";
-import OrderHistory from "../orders/orderHistory.jsx";
-import { useSelector, useDispatch } from 'react-redux';
-import { getAllArticles } from "../../redux/features/articlesSlice.js";
+import { Boxes, PackageCheck, TriangleAlert, PackageX, Plus, Search, Pencil, Trash2 } from 'lucide-react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { getAllArticles } from '../../redux/features/articlesSlice.js';
+import { useProducts } from '../../hooks/useProduct.js';
+import Orders from '../orders/Orders.jsx';
+import AddOrderForm from '../orders/AddOrderForm.jsx';
+import ProductDetails from './productDetails.jsx';
+import { formatPurchaseEur, formatDualCurrency } from '../../services/currency.js';
+const AddArticleForm = lazy(() => import('./addProductForm.jsx'));
+const OrderHistory = lazy(() => import('../orders/orderHistory.jsx'));
 
-
-function ProductsList() {
-    const {getProducts, deleteProduct} = useProducts();
-    const [searchTerm, setSearchTerm] = useState('');
-    const [productDetails, setProductDetails] = useState(null);
-    const [tabName, setTabName] = useState("stock");
-    const [page, setPage] = useState("Stock");
-    const [message, setMessage] = useState("");
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
-    const [resetState , setResetState]=useState(false)
-
-    //redux
-    const dispatch = useDispatch();
-    const articles = useSelector((state) => state.articles.list); 
-  
-    useEffect(() => {
-      dispatch(getAllArticles());
-    }, [dispatch]);
-
-
-    //redux
-
-
-    const handleDelete = async () => {
-        try {
-            await deleteProduct(productDetails.idArticle);
-            dispatch(getAllArticles()); 
-            toast.success("Produit supprimé avec succès !");
-        } catch (err) {
-            console.error("Error deleting product:", err);
-            toast.error("Erreur lors de la suppression du produit.");
-        }
-    };
-
-    const filteredArticles = articles
-        .filter((article) =>
-            article.name?.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-        .sort((a, b) => a.name.localeCompare(b.name));
-
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value);
-    };
-    return (
-
-        <div className="products-list flex flex-col items-center bg-cyan-50 bg-opacity-30 min-h-screen  ">
-             <ToastContainer position="top-left"/>
-
-            <div className="addProductModal">
-                {/* Open the modal using document.getElementById('ID').showModal() method */}
-                <dialog id="my_productForm" className="modal ">
-                    <div className="modal-box bg-white">
-                        <AddArticleForm resetState={resetState} setResetState={setResetState} />
-                        <div className="modal-action">
-                            <form method="dialog">
-                                {/* if there is a button in form, it will close the modal */}
-                                <button className="btn bg-red-700"  onClick={()=>{
-                                    setResetState(true)
-                                }}>Fermer</button>
-                            </form>
-                        </div>
-                    </div>
-                </dialog>
-            </div>
-            <div className="addOrderModal">
-                <div className="deleteProductModal">
-                    {/* Open the modal using document.getElementById('ID').showModal() method */}
-                    <dialog id="my_deleteForm" className="modal">
-                        <div className="modal-box bg-white">
-                            <p className="text-black">Vous êtes sur le point de supprimer l'article  </p>
-                           
-                            <div className="modal-action bg-white text-white">
-                                <button className="btn bg-red-700 border-0 text-white " onClick={handleDelete}>Oui</button>
-                                <form method="dialog">
-                                    {/* if there is a button in form, it will close the modal */}
-                                    <button className="btn bg-green-700 border-0 text-white ">Fermer</button>
-                                </form>
-                            </div>
-                        </div>
-                    </dialog>
-                </div>
-                {/* Open the modal using document.getElementById('ID').showModal() method */}
-                <dialog id="my_orderForm" className="modal">
-                    <div className="modal-box bg-white text-black">
-                        <AddOrderForm/>
-                        <div className="modal-action">
-                            <form method="dialog">
-                                {/* if there is a button in form, it will close the modal */}
-                                <button className="btn bg-red-700">Fermer</button>
-                            </form>
-                        </div>
-                    </div>
-                </dialog>
-            </div>
-            <div className="detailListModal">
-                {/* Open the modal using document.getElementById('ID').showModal() method */}
-                <dialog id="my_productDetails" className=" bg-white w-[40%] h-[50%]  rounded-lg shadow-2xl ">
-                    <div className=" bg-white ">
-                        {productDetails ? <ProductDetails article={productDetails}/> : "pas de produis"}
-                        <div className="modal-action ">
-                            <form method="dialog" >
-                                {/* if there is a button in form, it will close the modal */}
-                                <button className=" mr-4 btn bg-red-700 border-0 text-white">
-                                 Fermer
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </dialog>
-            </div>
-            <div className="rounded-lg my-2 bg-white w-full p-4 shadow">
-                <div className="flex flex-row justify-between">
-                    <span className="flex flex-row items-center">
-                 <ReceiptText className="text-gray-600"/>
-                    <h1 className=" text-gray-600 mx-2 font-bold text-2xl">{page}</h1>
-                    </span>
-                    {
-                        tabName === "stock" ? <button className="btn text-white bg-gray-600 "
-                                                      onClick={() => document.getElementById('my_productForm').showModal()}>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5}
-                                     stroke="currentColor" className="size-6">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-                                </svg>
-                                Créer un article
-                            </button>
-                            : <button className="btn text-white bg-gray-600 "
-                                      onClick={() => document.getElementById('my_orderForm').showModal()}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5}
-                                     stroke="currentColor" className="size-6">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-                                </svg>
-                                Nouvelle Commande </button>
-
-
-                    }
-                </div>
-
-                <div className="flex flex-row  items-center">
-                    <label className="input bg-cyan-50 input-bordered flex items-center gap-2 m-2">
-                        <input type="text" value={searchTerm}
-                               onChange={handleSearchChange} className="grow text-black" placeholder="Rechercher"/>
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 16 16"
-                            fill="currentColor"
-                            className="h-4 w-4 opacity-70">
-                            <path
-                                fillRule="evenodd"
-                                d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-                                clipRule="evenodd"/>
-                        </svg>
-                    </label>
-                </div>
-            </div>
-
-            {/* Table of products */}
-            <div>
-                <div role="tablist" className="tabs tabs-bordered ">
-                    <a role="tab" className="tab hover:scale-110 duration-500 cursor-pointer text-black" onClick={() => {
-                        setTabName("stock")
-                        setPage("Stock")
-                    }}>Mon Stock </a>
-                    <a role="tab" className="tab hover:scale-110 duration-500 cursor-pointer text-black " onClick={() => {
-                        setTabName("commandes")
-                        setPage("Commandes")
-                    }}>Mes commandes</a>
-                    <a role="tab" className="tab hover:scale-110 duration-500 cursor-pointer text-black " onClick={() => {
-                        setTabName("Historique")
-                        setPage("Historique")
-                    }}>Historique des commandes</a>
-                </div>
-            </div>
-            {
-                tabName === "stock" ?
-                    <div
-                        className="h-[38em]  p-4  bg-white  w-full overflow-x-auto">
-                        <table
-                            className=" w-full   ">
-                            {/* Table head */}
-                            <thead className="bg-gray-600 border-b   ">
-
-                            <tr>
-                                <th scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">Article
-                                </th>
-                                <th scope="col"
-                                    className="text-sm font-medium text-white px-6 py-4 text-left">Quantité
-                                </th>
-                                <th scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">Prix
-                                    d'achat
-                                </th>
-                                <th scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">Prix
-                                    de vente
-                                </th>
-                                <th scope="col" className="text-sm font-medium text-white px-6 py-4 text-left">Actions
-                                </th>
-                            </tr>
-                            </thead>
-                            {/* Table body */}
-                            <tbody className="">
-                            {filteredArticles.map((article) => (
-                                <tr key={article.id}
-                                    className="bg-white  cursor-pointer hover:shadow-2xl  border-b">
-                                    <td className="py-2 w-[65%] text-black px-4">{article.name}</td>
-                                    <td className={article.quantity < 5 ? "flex flex-row place-items-center h-full text-red-600" : "flex flex-row py-2 px-4 text-black place-items-center"}>
-                                        <Box className="mx-2" size={16}/> {article.quantity}</td>
-                                    <td className="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap place-items-center">{article.price} €</td>
-                                    <td className="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap place-items-center">{article.sell_price} FCFA</td>
-                                    <td className="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap place-items-center flex flex-row">
-                                        <Pencil size={16}
-                                                onClick={
-                                                    () => {
-                                                        const maPromesse = new Promise((resolve, reject) => {
-                                                            setProductDetails(article);
-                                                            resolve();
-                                                        })
-                                                        maPromesse
-                                                            .then(() => {
-                                                                document.getElementById('my_productDetails').showModal()
-                                                            })
-                                                    }
-                                                }
-                                                className="text-blue-700 mx-2 rotate-90 hover:rotate-0 duration-500"/>
-                                        <Trash2 size={16}
-                                                onClick={
-                                                    () => {
-                                                        const maPromesse = new Promise((resolve, reject) => {
-                                                            setProductDetails(article);
-                                                            resolve();
-                                                        })
-                                                        maPromesse
-                                                            .then(() => {
-                                                                document.getElementById('my_deleteForm').showModal()
-                                                            })
-                                                    }
-                                                }
-                                                className="text-red-700"/>
-                                    </td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
-                    </div>
-                    : tabName === 'commandes' ?
-                    <Orders className="w-full  "/> : <OrderHistory />
-            }
-
-        </div>
-    );
+export default function ProductsList() {
+  const dispatch = useDispatch();
+  const { list: articles, loading, error } = useSelector((state) => state.articles);
+  const { deleteProduct } = useProducts();
+  const [tab, setTab] = useState('stock');
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [modal, setModal] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  const dialog = useRef(null);
+  useEffect(() => { dispatch(getAllArticles()); }, [dispatch]);
+  const filtered = articles.filter((item) => item.name?.toLowerCase().includes(search.toLowerCase()) || (search && item.code_ref?.includes(search))).sort((a, b) => a.name.localeCompare(b.name));
+  const pages = Math.max(1, Math.ceil(filtered.length / 25));
+  const currentPage = Math.min(page, pages);
+  function open(type, article) { setMessage(''); setModal({ type, article }); dialog.current.showModal(); }
+  async function remove() {
+    if (busy) return;
+    setBusy(true);
+    try { await deleteProduct(modal.article.id); dispatch(getAllArticles()); dialog.current.close(); setMessage('Article supprimé.'); }
+    catch (error) { setMessage(error.message); }
+    finally { setBusy(false); }
+  }
+  const stats = [
+    { label: 'Références au catalogue', value: articles.length, icon: Boxes, className: 'stat-neutral' },
+    { label: 'Unités disponibles', value: articles.reduce((total, item) => total + Number(item.quantity || 0), 0), icon: PackageCheck, className: 'stat-green' },
+    { label: 'Produits à réapprovisionner', value: articles.filter((item) => Number(item.quantity || 0) > 0 && Number(item.quantity) < 5).length, icon: TriangleAlert, className: 'stat-amber' },
+    { label: 'Produits en rupture', value: articles.filter((item) => Number(item.quantity || 0) === 0).length, icon: PackageX, className: 'stat-red' },
+  ];
+  return <section className="inventory-page">
+    <div className="page-heading"><div><p className="eyebrow">VOTRE ACTIVITÉ, EN UN COUP D’ŒIL</p><h1>Gestion du stock</h1><p className="page-description">Vos produits, vos approvisionnements. Toujours à jour.</p></div>
+      <button className="btn btn-primary" onClick={() => open(tab === 'stock' ? 'add' : 'order')}><Plus size={17} />{tab === 'stock' ? 'Créer un article' : 'Nouvelle commande'}</button>
+    </div>
+    <div className="inventory-stats">{stats.map(({ label, value, icon: Icon, className }) => <article key={label} className={`metric-card ${className}`}><div className="metric-top"><span>{label}</span><Icon size={19} /></div><strong>{loading || error ? '—' : value.toLocaleString('fr-FR')}</strong><small>{label === 'Produits à réapprovisionner' ? 'Moins de 5 unités en stock' : label === 'Produits en rupture' ? 'Stock à zéro' : label === 'Unités disponibles' ? 'Tous produits confondus' : 'Votre catalogue actuel'}</small></article>)}</div>
+    <div className="inventory-panel">
+    <nav aria-label="Gestion des articles" className="inventory-tabs">
+      {[['stock', 'Mon stock'], ['orders', 'Mes commandes'], ['history', 'Historique des commandes']].map(([value, label]) => <button key={value} className={`inventory-tab ${tab === value ? 'selected' : ''}`} aria-pressed={tab === value} onClick={() => setTab(value)}>{label}</button>)}
+    </nav>
+    {message && !modal && <p role="status">{message}</p>}
+    {tab === 'stock' ? <>
+      <div className="table-toolbar"><label className="search-field"><Search size={18} /><span className="sr-only">Rechercher par nom ou code-barres</span><input placeholder="Rechercher un produit, un code-barres…" className="input" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} /></label><span className="result-count">{filtered.length} produit{filtered.length > 1 ? 's' : ''}</span></div>
+      {loading && <p role="status">Chargement des articles…</p>}{error && <p role="alert">{error}</p>}
+      <div className="overflow-x-auto bg-white rounded"><table className="table w-full"><thead><tr><th>Article</th><th>Quantité</th><th>Achat (FCFA)</th><th>Vente (FCFA)</th><th>Actions</th></tr></thead><tbody>
+        {filtered.slice((currentPage - 1) * 25, currentPage * 25).map((article) => <tr key={article.id}><td><div className="product-identity"><span className="product-icon"><Boxes size={19} /></span><div><strong>{article.name}</strong><small>{article.code_ref || 'Sans code-barres'}</small></div></div></td><td><span className={`stock-pill ${Number(article.quantity ?? 0) === 0 ? 'stock-empty' : Number(article.quantity) < 5 ? 'stock-low' : 'stock-ok'}`}>{article.quantity ?? 0} <span>unités</span></span></td><td>{article.price > 0 ? formatPurchaseEur(article.price) : 'À définir'}</td><td>{article.sell_price > 0 ? formatDualCurrency(article.sell_price) : 'À définir'}</td><td><div className="flex gap-2"><button className="btn icon-button" aria-label={`Modifier ${article.name}`} onClick={() => open('edit', article)}><Pencil size={16} /></button><button className="btn icon-button danger-icon" aria-label={`Supprimer ${article.name}`} onClick={() => open('delete', article)}><Trash2 size={16} /></button></div></td></tr>)}
+        {!loading && !error && !filtered.length && <tr><td colSpan="5"><div className="empty-state"><span className="empty-icon"><Boxes size={30} /></span><h3>{articles.length ? 'Aucun produit trouvé' : 'Votre catalogue commence ici'}</h3><p>{articles.length ? 'Aucun résultat. Essayez un autre nom ou code-barres.' : 'Votre stock est vide. Créez votre premier article, puis une commande pour le réceptionner.'}</p>{!articles.length && <button className="btn btn-primary" onClick={() => open('add')}><Plus size={16} />Ajouter mon premier produit</button>}</div></td></tr>}
+      </tbody></table></div>
+      {pages > 1 && <nav className="flex items-center gap-4 mt-4" aria-label="Pagination"><button className="btn" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>Précédent</button><span>{currentPage} / {pages}</span><button className="btn" disabled={currentPage === pages} onClick={() => setPage(currentPage + 1)}>Suivant</button></nav>}
+    </> : tab === 'orders' ? <Orders /> : <Suspense fallback={<p>Chargement…</p>}><OrderHistory /></Suspense>}
+    </div>
+    <dialog ref={dialog} className="modal" onCancel={(event) => { if (busy) event.preventDefault(); }} onClose={() => setModal(null)}><div className="modal-box bg-white text-black">
+      <Suspense fallback={<p>Chargement…</p>}>
+        {modal?.type === 'add' && <AddArticleForm />}
+        {modal?.type === 'order' && <AddOrderForm />}
+        {modal?.type === 'edit' && <ProductDetails key={modal.article.id} article={modal.article} />}
+        {modal?.type === 'delete' && <><h2 className="text-xl">Supprimer {modal.article.name} ?</h2><p>Cette action est définitive.</p><button className="btn bg-red-700 text-white mt-4" disabled={busy} onClick={remove}>{busy ? 'Suppression…' : 'Confirmer la suppression'}</button>{message && <p role="alert">{message}</p>}</>}
+      </Suspense><form method="dialog" className="modal-action"><button className="btn" disabled={busy}>Fermer</button></form>
+    </div></dialog>
+  </section>;
 }
-
-export default ProductsList;

@@ -1,9 +1,7 @@
-/* eslint-disable */
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import { loginUser } from "../redux/features/authSlice";
-import { supabase } from "../hooks/useSupabase.js";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
@@ -12,95 +10,37 @@ export default function Login() {
 
     const [showPassword, setShowPassword] = useState(false);
     const dispatch = useDispatch();
-    
+
     const navigate = useNavigate();
-    const { loading, error, user } = useSelector((state) => state.auth); // Récupération de l'état Re
-       
-    
+    const { loading, error } = useSelector((state) => state.auth); // Récupération de l'état Re
+
+
         const handleLogin = async (e) => {
             e.preventDefault();
-    
+
             const result = await dispatch(loginUser({ email, password }));
-    
+
             if (result.meta.requestStatus === "fulfilled") {
-                alert("Connexion réussie !");
                 navigate("/"); // Redirige après succès
             }
         };
-    
 
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100 relative">
-            {/* Arrière-plan avec effet de flou */}
-            <div className="absolute inset-0 bg-[url(/loginPage.jpg)] bg-cover bg-center blur-sm"></div>
 
-            {/* Contenu principal */}
-            <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md relative z-10">
-                <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
-                    France Distribution
-                </h2>
-                <h3 className="text-2xl font-semibold text-center text-gray-700 mb-6">
-                    Connexion
-                </h3>
-
-                <form onSubmit={handleLogin} className="space-y-5">
-                    {/* Champ Email */}
-                    <div className="relative">
-                        <label className="block text-gray-700 font-medium">Email</label>
-                        <div className="flex items-center border rounded-lg overflow-hidden">
-                            <Mail className="mx-3 text-gray-400" />
-                            <input
-                                type="email"
-                                placeholder="Votre email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Champ Mot de passe */}
-                    <div className="relative">
-                        <label className="block text-gray-700 font-medium">Mot de passe</label>
-                        <div className="flex items-center border rounded-lg overflow-hidden">
-                            <Lock className="mx-3 text-gray-400" />
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                placeholder="Votre mot de passe"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                            />
-                            <button 
-                                type="button" 
-                                onClick={() => setShowPassword(!showPassword)} 
-                                className="px-3 text-gray-500 hover:text-gray-700 transition-all"
-                            >
-                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Bouton de connexion */}
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-all duration-300 disabled:bg-gray-400"
-                    >
-                        {loading ? "Connexion..." : "Se connecter"}
-                    </button>
-                </form>
-
-                {/* Message d'erreur */}
-                {error && (
-                    <p className="text-red-500 text-center mt-4 animate-pulse">
-                        {error}
-                    </p>
-                )}
-
-                {/* Lien d'inscription */}
-                
-            </div>
+    return <main className="login-layout">
+      <section className="login-story">
+        <div className="brand"><span className="brand-mark">fd<span>.</span></span><span>France<br /><strong>Distribution</strong></span></div>
+        <div className="login-story-content"><p className="eyebrow">LE COMMERCE, SIMPLEMENT.</p><h1>Gardez une longueur<br />d’avance sur<br /><em>votre activité.</em></h1><p>Du premier carton réceptionné au dernier article vendu, retrouvez l’essentiel au même endroit.</p>
+          <div className="logistics-art" aria-hidden="true"><div className="art-orbit" /><div className="art-box box-one"><span>FD</span></div><div className="art-box box-two"><span>↑ ↑</span></div><div className="art-box box-three"><span>FRANCE<br />DISTRIBUTION</span></div><div className="art-label">DU STOCK À LA VENTE <span>↗</span></div></div>
         </div>
-    );
+        <div className="login-story-footer"><span>Stock · Approvisionnements · Caisse</span><span>DÉTAIL & GROS</span></div>
+      </section>
+      <section className="login-form-side"><div className="login-form-card"><span className="login-badge"><Lock size={15} /> Votre espace professionnel</span><h2>Heureux de vous<br />retrouver.</h2><p className="page-description">Connectez-vous pour gérer votre activité.</p>
+        <form onSubmit={handleLogin} className="login-form">
+          <label htmlFor="login-email">Email</label><div className="login-input"><Mail size={18} /><input type="email" id="login-email" required autoComplete="username" placeholder="vous@entreprise.com" value={email} onChange={(event) => setEmail(event.target.value)} /></div>
+          <label htmlFor="login-password">Mot de passe</label><div className="login-input"><Lock size={18} /><input id="login-password" required autoComplete="current-password" type={showPassword ? 'text' : 'password'} placeholder="Votre mot de passe" value={password} onChange={(event) => setPassword(event.target.value)} /><button type="button" className="password-toggle" aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div>
+          {error && <p role="alert" className="form-error">{error}</p>}
+          <button type="submit" className="btn btn-primary login-submit" disabled={loading}>{loading ? 'Connexion…' : 'Se connecter'}<span aria-hidden="true">→</span></button>
+        </form><p className="login-help">Un problème d’accès ? Contactez votre administrateur.</p>
+      </div><p className="login-bottom">FRANCE DISTRIBUTION <span>La gestion qui vous simplifie la journée.</span></p></section>
+    </main>;
 }

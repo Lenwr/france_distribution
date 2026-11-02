@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+        && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == "admin";
+    }
+    function validQuantity(value) { return value is int && value >= 0; }
+    function validPrice(value) { return value is number && value >= 0 && value < 1000000000000; }
+
+
+    function validDiscountTotals(data) {
+      return data.gross_cents is int && data.gross_cents > 0 && data.gross_cents < 100000000000000
+        && data.discount_cents is int && data.discount_cents >= 0 && data.discount_cents <= data.gross_cents
+        && data.total_cents is int && data.total_cents == data.gross_cents - data.discount_cents
+        && data.gross_total == data.gross_cents / 100.0 && data.total == data.total_cents / 100.0;
+    }
+
+    match /profiles/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+      // Admin roles are provisioned through a trusted server or Firebase console.
+      allow create: if signedIn() && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['id', 'username', 'website', 'avatar_url', 'updated_at', 'role'])
+        && request.resource.data.get('role', 'user') == 'user';
+      allow update: if signedIn() && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['username', 'website', 'avatar_url', 'updated_at']);
+      allow delete: if isAdmin() && request.auth.uid != userId;
+    }
+    match /articles/{id} {
+      allow read, delete: if isAdmin();
+      allow create: if isAdmin()
+        && request.resource.data.name is string && request.resource.data.name.size() > 0
+        && validQuantity(request.resource.data.quantity)
+        && validPrice(request.resource.data.price)
+        && validPrice(request.resource.data.sell_price);
+      // Validate changed fields while permitting repair of older incomplete articles.
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['name', 'price', 'sell_price', 'quantity', 'code_ref', 'suppliers', 'website', 'avatar_url', 'updated_at', 'id', 'idArticle'])
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['quantity']) || validQuantity(request.resource.data.quantity))
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['price']) || validPrice(request.resource.data.price))
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['sell_price']) || validPrice(request.resource.data.sell_price));
+    }
+    match /catalogue_public/{id} {
+      allow read: if true;
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['name', 'image', 'category', 'sell_price', 'available', 'code_ref', 'updated_at'])
+        && request.resource.data.name is string
+        && validPrice(request.resource.data.sell_price)
+        && request.resource.data.available is bool;
+      allow delete: if isAdmin();
+    }
+    match /commandes/{id} {
+      allow read, delete: if isAdmin();
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['id', 'idCommande', 'idArticle', 'quantity', 'name', 'statut'])
+        && request.resource.data.quantity is int
+        && request.resource.data.quantity > 0 && request.resource.data.idArticle is string;
+    }
+    match /commandes_historique/{id} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && request.resource.data.user_id == request.auth.uid
+        && request.resource.data.quantity is int && request.resource.data.quantity > 0
+        && request.resource.data.type in ['commande', 'reception'];
+    }
+    match /ventes/{id} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && request.resource.data.status == 'completed'
+        && request.resource.data.user_id == request.auth.uid
+        && validPrice(request.resource.data.total) && validDiscountTotals(request.resource.data)
+        && request.resource.data.discount_total == request.resource.data.discount_cents / 100.0
+        && request.resource.data.items is list && request.resource.data.items.size() > 0;
+    }
+    match /ventes_details/{id} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && request.resource.data.quantity is int && request.resource.data.quantity > 0
+        && validPrice(request.resource.data.prix_unitaire) && request.resource.data.prix_unitaire > 0
+        && validPrice(request.resource.data.total) && validDiscountTotals(request.resource.data)
+        && request.resource.data.discount_amount == request.resource.data.discount_cents / 100.0
+        && request.resource.data.discount_type in ['percent', 'amount']
+        && validPrice(request.resource.data.discount_value)
+        && (request.resource.data.discount_type != 'percent' || request.resource.data.discount_value <= 100)
+        && getAfter(/databases/$(database)/documents/ventes/$(request.resource.data.id_vente)).data.status == 'completed';
+    }
+  }
+}

@@ -1,118 +1,42 @@
-/* eslint-disable */
-import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { useProducts } from "../../hooks/useProduct.js";
-import { Edit } from "lucide-react";
-import { ToastContainer, toast } from "react-toastify";
+import PropTypes from 'prop-types';
+import { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { useProducts } from '../../hooks/useProduct.js';
+import { validPrice } from '../../services/inventoryService.js';
+import { getAllArticles } from '../../redux/features/articlesSlice.js';
+import { formatPurchaseEur, formatEurFromXof } from '../../services/currency.js';
 
-function ProductDetails(props) {
-  const [article, setArticle] = useState({}); // Null au lieu de {} pour différencier un article non chargé
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
-  const [purchasePrice, setPurchasePrice] = useState("");
-  const [currentOrder, setCurrentOrder] = useState("");
+export default function ProductDetails({ article }) {
+  const [price, setPrice] = useState(article.sell_price ?? '');
+  const [purchasePrice, setPurchasePrice] = useState(article.price ?? '');
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
   const { updateProductPrice, updatePurchasePrice } = useProducts();
-
-  useEffect(() => {
-    return () => {
-      setArticle(props.article);
-    };
-  }, [props]);
-
-  function handleSellPrice(event) {
-    event.preventDefault(); // Empêche le rechargement de la page
-  
-    if (price === 0 || price === "") {
-      toast("Veuillez rentrer une valeur supérieure à 0 !!!");
-    } else {
-      updateProductPrice(article.id, price).then((r) => {});
-      setPrice(price);
-      toast("Article mis à jour !!!");
-    }
+  const dispatch = useDispatch();
+  async function save(event, field) {
+    event.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setMessage('');
+    try {
+      if (field === 'sell') await updateProductPrice(article.id, validPrice(price));
+      else await updatePurchasePrice(article.id, validPrice(purchasePrice, true));
+      dispatch(getAllArticles());
+      setMessage('Prix enregistré.');
+    } catch (error) { setMessage(error.message); }
+    finally { setBusy(false); }
   }
-  
-  function handlePurchasePrice(event) {
-    event.preventDefault(); // Empêche le rechargement de la page
-  
-    if (purchasePrice === 0 || purchasePrice === "") {
-      toast("Veuillez rentrer une valeur supérieure à 0 !!!");
-    } else {
-      updatePurchasePrice(article.id, purchasePrice).then((r) => {});
-      setPurchasePrice(purchasePrice);
-      toast("Article mis à jour !!!");
-    }
-  }
-  
-
-  return (
-    <div className="content text-black ">
-      <div className="bg-cyan-50 h-25 w-full flex place-items-center  flex-row ">
-        <Edit className="text-blue-700 bg-white rounded-lg mx-2 shadow size-8 p-2 " />
-        <h1 className="text-l text-black font-bold">{props.article.name}</h1>
-      </div>
-      <form className=" flex justify-center items-center">
-        <div className=" place-items-center">
-          <label className="form-control w-full max-w-xs">
-            <div className="label flex flex-col items-center">
-              <h1 className="text-2xl font-semibold">
-                {" "}
-                Mettre à jour les prix{" "}
-              </h1>
-            </div>
-            <p className="my-2 text-black">Prix de vente </p>
-            <div className="flex flex-rows place-items-center">
-              <input
-                type="number"
-                onChange={(e) => {
-                  setPrice(e.target.value);
-                }}
-                placeholder={props.article.sell_price}
-                className="input bg-cyan-50 input-bordered w-full max-w-xs"
-                name={price}
-              />
-              <div className="flex flex-row justify-around items-center my-2 ">
-                <button
-                  className="btn mx-2 bg-green-700 text-white border-0"
-                  onClick={handleSellPrice}
-                >
-                  {" "}
-                  MAJ{" "}
-                </button>
-              </div>
-            </div>
-
-            <p className="my-2 text-black">Prix d'achat </p>
-            <div className="flex flex-rows place-items-center">
-              <input
-                type="number"
-                onChange={(e) => {
-                  setPurchasePrice(e.target.value);
-                }}
-                placeholder={props.article.price}
-                className="input bg-cyan-50 input-bordered w-full max-w-xs"
-                name={purchasePrice}
-              />
-              <div className="flex flex-row justify-around items-center my-2 ">
-                <button
-                  className="btn mx-2 bg-green-700 text-white border-0"
-                  onClick={handlePurchasePrice}
-                >
-                  {" "}
-                  MAJ{" "}
-                </button>
-              </div>
-            </div>
-          </label>
-          <ToastContainer />
-        </div>
-      </form>
-      <p className="text-red-600">
-        {price < 0 ? "Votre prix est inférieure à 0" : ""}
-      </p>
-    </div>
-  );
+  return <section className="p-4 text-black"><h2 className="text-xl font-bold">{article.name}</h2>
+    <form onSubmit={(event) => save(event, 'sell')} className="my-4 flex flex-wrap gap-2">
+      <label>Prix de vente à Lomé (FCFA)<input className="input input-bordered w-full" type="number" min="0.01" step="0.01" required value={price} onChange={(event) => setPrice(event.target.value)} /><small className="currency-equivalent">≈ {formatEurFromXof(price)}</small></label>
+      <button className="btn bg-green-700 text-white self-end" disabled={busy}>Enregistrer le prix de vente</button>
+    </form>
+    <form onSubmit={(event) => save(event, 'purchase')} className="my-4 flex flex-wrap gap-2">
+      <label>Prix d’achat (EUR)<input className="input input-bordered w-full" type="number" min="0" step="0.01" required value={purchasePrice} onChange={(event) => setPurchasePrice(event.target.value)} /><small className="currency-equivalent">{formatPurchaseEur(purchasePrice)}</small></label>
+      <button className="btn bg-green-700 text-white self-end" disabled={busy}>Enregistrer le prix d’achat</button>
+    </form>
+    {message && <p role="status">{message}</p>}
+  </section>;
 }
 
-export default ProductDetails;
+ProductDetails.propTypes = { article: PropTypes.shape({ id: PropTypes.string.isRequired, name: PropTypes.string.isRequired, price: PropTypes.oneOfType([PropTypes.number, PropTypes.string]), sell_price: PropTypes.oneOfType([PropTypes.number, PropTypes.string]) }).isRequired };

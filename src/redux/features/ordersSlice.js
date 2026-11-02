@@ -1,12 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { fetchOrders, addOrders } from '../services/ordersServices';
-import { supabase } from '../../hooks/useSupabase';
 
 // Action asynchrone pour récupérer les commandes
 export const getAllOrders = createAsyncThunk(
   'orders/fetchAll',
   async (_, { rejectWithValue }) => {
     try {
+      const { fetchOrders } = await import('../services/ordersServices.js');
       return await fetchOrders();
     } catch (error) {
       return rejectWithValue(error.message);
@@ -19,6 +18,7 @@ export const addNewOrder = createAsyncThunk(
   'orders/add',
   async (order, { rejectWithValue }) => {
     try {
+      const { addOrders } = await import('../services/ordersServices.js');
       const response = await addOrders(order);
       return response; // Supposons que la réponse contient directement la commande ajoutée
     } catch (error) {
@@ -31,54 +31,11 @@ export const addNewOrder = createAsyncThunk(
 // 🔹 Action pour ajouter ou mettre à jour une commande
 export const addOrUpdateOrder = createAsyncThunk(
   'orders/addOrUpdate',
-  async ({ idArticle, quantity, name }, { rejectWithValue }) => {
+  async ({ idArticle, quantity, operationId }, { rejectWithValue, getState }) => {
     try {
-      // 🔍 Vérifier si la commande existe déjà
-      const { data: existingOrder, error: fetchError } = await supabase
-        .from('commandes')
-        .select('*')
-        .eq('idArticle', idArticle)
-        .single();
-
-      if (fetchError && fetchError.code !== 'PGRST116') throw fetchError; // Ignorer l'erreur si aucune commande trouvée
-
-      let orderData;
-
-      if (existingOrder) {
-        // 🔄 Mise à jour de la quantité existante
-        const newQuantity = existingOrder.quantity + parseInt(quantity, 10);
-        const { data, error: updateError } = await supabase
-          .from('commandes')
-          .update({ quantity: newQuantity })
-          .eq('id', existingOrder.id)
-          .select('*')
-          .single();
-
-        if (updateError) throw updateError;
-        orderData = data;
-      } else {
-        // 🆕 Création d'une nouvelle commande
-        const { data, error: insertError } = await supabase
-          .from('commandes')
-          .insert([{ idArticle, quantity: parseInt(quantity, 10), name, statut: "En cours" }])
-          .select('*')
-          .single();
-
-        if (insertError) throw insertError;
-        orderData = data;
-      }
-
-      // 📌 Ajouter la commande dans `commandes_historique`
-      const { error: historyError } = await supabase
-        .from('commandes_historique')
-        .insert([{ id_commande: orderData.id, id_article: idArticle, quantity: quantity, name, date_commande: new Date() }]);
-
-      if (historyError) throw historyError;
-
-      return orderData;
-    } catch (error) {
-      return rejectWithValue(error.message);
-    }
+      const [{ firestore }, { addOrUpdateOrder: saveOrder }] = await Promise.all([import('../../hooks/useSupabase.js'), import('../../services/inventoryService.js')]);
+      return await saveOrder(firestore, { idArticle, quantity }, operationId, getState().auth.user?.id);
+    } catch (error) { return rejectWithValue(error.message); }
   }
 );
 
@@ -115,7 +72,7 @@ const ordersSlice = createSlice({
       })
       .addCase(addNewOrder.fulfilled, (state, action) => {
         state.loading = false; // On désactive le chargement
-        state.list.push(action.payload); // Ajout direct de l'élément reçu
+        state.list.push(...action.payload); // Ajout direct de l'élément reçu
       })
       .addCase(addNewOrder.rejected, (state, action) => {
         state.loading = false; // En cas d'échec, désactivation du chargement
