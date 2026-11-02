@@ -1,7 +1,7 @@
 import { localMode } from '../services/appMode.js';
 import PropTypes from 'prop-types';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Boxes, ScanLine, ShoppingBag, ArrowUpRight, UserRound, Store, BarChart3 } from 'lucide-react';
+import { Boxes, ScanLine, ShoppingBag, ArrowUpRight, UserRound, Store, BarChart3, ReceiptText } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider.jsx';
 import NavBar from './navBar.jsx';
 
@@ -19,6 +19,7 @@ export default function AppShell({ children }) {
           <NavLink to="/" end><Boxes size={19} /><span>Stock & commandes</span></NavLink>
           <NavLink to="/catalogue"><Store size={19} /><span>Catalogue</span></NavLink>
           <NavLink to="/stats"><BarChart3 size={19} /><span>Stats ventes</span></NavLink>
+          <NavLink to="/purchases"><ReceiptText size={19} /><span>Achats & tickets</span></NavLink>
           <NavLink to="/sales"><ShoppingBag size={19} /><span>Caisse</span><ArrowUpRight size={16} className="nav-arrow" /></NavLink>
           <NavLink to="/scan"><ScanLine size={19} /><span>Scanner un produit</span></NavLink>
         </>}

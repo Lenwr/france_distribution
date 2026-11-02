@@ -14,6 +14,7 @@ const Catalogue = lazy(() => import('./pages/catalogue/Catalogue'));
 const ProductDetailPage = lazy(() => import('./pages/catalogue/ProductDetailPage'));
 const PublicCatalogue = lazy(() => import('./pages/public/PublicCatalogue'));
 const SalesStats = lazy(() => import('./pages/stats/SalesStats'));
+const Purchases = lazy(() => import('./pages/purchases/Purchases'));
 const Account = lazy(() => import('./pages/profile/Account'));
 const Login = lazy(() => import('./auth/Login'));
 const NotFound = lazy(() => import('./components/notFound'));
@@ -25,6 +26,7 @@ export default function App() {
     <Route path="/" element={<AdminRoute><AppShell><Dashboard /></AppShell></AdminRoute>} />
     <Route path="/sales" element={<AdminRoute><AppShell><Sales /></AppShell></AdminRoute>} />
     <Route path="/stats" element={<AdminRoute><AppShell><SalesStats /></AppShell></AdminRoute>} />
+    <Route path="/purchases" element={<AdminRoute><AppShell><Purchases /></AppShell></AdminRoute>} />
     <Route path="/orders" element={<AdminRoute><AppShell><Orders /></AppShell></AdminRoute>} />
     <Route path="/catalogue" element={<AdminRoute><AppShell><Catalogue /></AppShell></AdminRoute>} />
     <Route path="/catalogue/:id" element={<AdminRoute><AppShell><ProductDetailPage /></AppShell></AdminRoute>} />

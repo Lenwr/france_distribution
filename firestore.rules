@@ -85,5 +85,16 @@ service cloud.firestore {
         && (request.resource.data.discount_type != 'percent' || request.resource.data.discount_value <= 100)
         && getAfter(/databases/$(database)/documents/ventes/$(request.resource.data.id_vente)).data.status == 'completed';
     }
+    match /achats/{id} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && request.resource.data.user_id == request.auth.uid
+        && request.resource.data.purchase_date is string
+        && request.resource.data.supplier is string
+        && validPrice(request.resource.data.total)
+        && request.resource.data.file_name is string
+        && request.resource.data.file_data is string
+        && request.resource.data.file_data.size() < 1000000;
+      allow update, delete: if isAdmin();
+    }
   }
 }
