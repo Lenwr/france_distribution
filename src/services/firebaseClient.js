@@ -1,4 +1,5 @@
-const localMode = import.meta.env.VITE_DATA_MODE !== 'firebase';
+const configuredMode = import.meta.env.VITE_DATA_MODE;
+const localMode = configuredMode ? configuredMode !== 'firebase' : !import.meta.env.PROD;
 import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 
