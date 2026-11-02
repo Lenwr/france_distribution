@@ -142,3 +142,4 @@ Playwright démarre son serveur Vite avec une configuration locale dédiée : il
 - **Impossible de charger le profil / permissions refusées** : vérifier la base `(default)` et déployer les règles sur le bon projet.
 - **Caméra inaccessible** : autoriser la caméra et utiliser HTTPS ou localhost, ou saisir le code-barres manuellement.
 - **Audit npm complet** : les outils de développement Firebase conservent une alerte transitive modérée sur `stream-json` (également remontée sur `firebase-tools`). La version corrigée change son API et ne peut pas remplacer directement celle du CLI. L’application livrée au navigateur ne l’utilise pas ; ne lancez pas d’import Firebase sur des fichiers JSON non fiables. Recontrôler cette alerte lors des prochaines mises à jour du CLI.
+# france_distribution
