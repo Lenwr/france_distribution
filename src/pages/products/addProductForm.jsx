@@ -13,6 +13,7 @@ export default function AddArticleForm() {
   const [sellPrice, setSellPrice] = useState('');
   const [code, setCode] = useState('');
   const [supplier, setSupplier] = useState('');
+  const [image, setImage] = useState('');
   const [scanning, setScanning] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -31,6 +32,7 @@ export default function AddArticleForm() {
       const product = await fetchProduct(barcode);
       if (version !== searchVersion.current) return;
       setName(product?.product_name ?? '');
+      setImage(product?.image_url ?? product?.image_front_url ?? '');
       setSupplier(product?.brands ?? '');
       setMessage(product ? 'Produit trouvé. Vérifiez les informations avant de l’ajouter.' : 'Produit non trouvé. Saisissez ses informations manuellement.');
     } catch {
@@ -46,9 +48,9 @@ export default function AddArticleForm() {
       if (!name.trim()) throw new Error('Le nom de l’article est obligatoire.');
       if (code && !/^\d{8,14}$/.test(code.trim())) throw new Error('Le code-barres doit contenir 8 à 14 chiffres.');
       await dispatch(addNewArticle({ name: name.trim(), price: validPrice(price, true), sell_price: validPrice(sellPrice),
-        code_ref: code.trim(), suppliers: supplier.trim(), quantity: 0 })).unwrap();
+        code_ref: code.trim(), suppliers: supplier.trim(), avatar_url: image.trim(), quantity: 0 })).unwrap();
       searchVersion.current++;
-      setName(''); setPrice(''); setSellPrice(''); setCode(''); setSupplier(''); setScanning(false);
+      setName(''); setPrice(''); setSellPrice(''); setCode(''); setSupplier(''); setImage(''); setScanning(false);
       setMessage('Article ajouté. Réceptionnez une commande pour alimenter le stock.');
     } catch (error) { setMessage(typeof error === 'string' ? error : error.message); }
     finally { lock.current = false; setBusy(false); }
@@ -61,6 +63,7 @@ export default function AddArticleForm() {
       <button type="button" className="btn" disabled={busy || !code} onClick={() => lookup(code)}>Rechercher les informations du produit</button>
       <label>Nom de l’article<input className="input input-bordered w-full" required value={name} onChange={(event) => { searchVersion.current++; setName(event.target.value); }} disabled={busy} /></label>
       <label>Marque ou fournisseur<input className="input input-bordered w-full" value={supplier} onChange={(event) => setSupplier(event.target.value)} disabled={busy} /></label>
+      <label>Image de l’article (facultatif)<input className="input input-bordered w-full" type="url" value={image} onChange={(event) => setImage(event.target.value)} placeholder="https://…" disabled={busy} /></label>
       <label>Prix d’achat (EUR)<input className="input input-bordered w-full" type="number" min="0" step="0.01" required value={price} onChange={(event) => setPrice(event.target.value)} disabled={busy} />{price && <small className="currency-equivalent">{formatPurchaseEur(price)}</small>}</label>
       <label>Prix de vente (FCFA)<input className="input input-bordered w-full" type="number" min="0.01" step="0.01" required value={sellPrice} onChange={(event) => setSellPrice(event.target.value)} disabled={busy} />{sellPrice && <small className="currency-equivalent">≈ {formatEurFromXof(sellPrice)}</small>}</label>
       <button className="btn bg-green-700 text-white" disabled={busy}>{busy ? 'Ajout…' : 'Ajouter l’article'}</button>

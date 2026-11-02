@@ -15,6 +15,21 @@ export function validPrice(value, allowZero = false) {
   return price;
 }
 
+export async function applyPurchaseInventory(db, lines) {
+  if (!Array.isArray(lines) || !lines.length) throw new Error('Ajoutez au moins une ligne à l’inventaire.');
+  const normalized = lines.map((line) => ({ id: line.id, quantity: positiveQuantity(Number(line.quantity)) }));
+  if (new Set(normalized.map((line) => line.id)).size !== normalized.length) throw new Error('Un article apparaît plusieurs fois.');
+  return runTransaction(db, async (transaction) => {
+    const snapshots = await Promise.all(normalized.map((line) => transaction.get(doc(db, 'articles', line.id))));
+    snapshots.forEach((snapshot, index) => {
+      if (!snapshot.exists()) throw new Error('Un article de l’inventaire est introuvable.');
+      const article = snapshot.data(); const quantity = stockOf(article) + normalized[index].quantity;
+      transaction.update(snapshot.ref, { quantity, updated_at: new Date().toISOString() });
+      transaction.set(doc(db, 'catalogue_public', snapshot.id), publicArticle({ ...article, quantity }));
+    });
+  });
+}
+
 function stockOf(article) {
   const stock = Number(article.quantity ?? 0);
   if (!Number.isSafeInteger(stock) || stock < 0) throw new Error('Le stock de cet article est invalide.');
@@ -22,7 +37,7 @@ function stockOf(article) {
 }
 
 function publicArticle(article) {
-  return { name: article.name, image: article.image || '', category: article.category || article.suppliers || '', sell_price: article.sell_price, available: Number(article.quantity || 0) > 0, code_ref: article.code_ref || '', updated_at: new Date().toISOString() };
+  return { name: article.name, image: article.image || article.avatar_url || '', category: article.category || article.suppliers || '', sell_price: article.sell_price, available: Number(article.quantity || 0) > 0, code_ref: article.code_ref || '', updated_at: new Date().toISOString() };
 }
 
 // The sale ID is created once by the caller and reused after a failed request.
