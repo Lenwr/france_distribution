@@ -4,12 +4,12 @@ import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyAVsGA7Wq5TzC5aOYlhzjlM4qYk-ZQISAw',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'inside-d5e59.firebaseapp.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'inside-d5e59',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'inside-d5e59.firebasestorage.app',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '32501856387',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:32501856387:web:a00994316fa5f219e503b6',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyALS0RP2ri_h5Z_H839hQYPl6LgQWSSFNk',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'france-distribution-bcfee.firebaseapp.com',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'france-distribution-bcfee',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'france-distribution-bcfee.firebasestorage.app',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '908636595690',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:908636595690:web:b64c7e7b9cf9bc77ecfe93',
 };
 
 const missingConfig = Object.entries(firebaseConfig)
