@@ -1,4 +1,4 @@
-import { collection, deleteDoc, doc, getDocs, query, runTransaction } from './dataStore.js';
+import { collection, deleteDoc, doc, getDocs, query, runTransaction, updateDoc } from './dataStore.js';
 import { firestore } from '../hooks/useSupabase.js';
 
 const name = 'achats';
@@ -12,3 +12,4 @@ export async function savePurchase(purchase) {
   return { ...purchase, id };
 }
 export async function deletePurchase(id) { await deleteDoc(doc(firestore, name, id)); }
+export async function updatePurchaseInventory(id, inventory) { await updateDoc(doc(firestore, name, id), { inventory, inventory_updated_at: new Date().toISOString() }); }
