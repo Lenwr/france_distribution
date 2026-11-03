@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import { toast } from 'react-toastify';
 const blank = () => ({ name: '', quantity: 1, purchase_price: '', promo_price: '', sale_price: '' });
 export default function InventoryDraft({ purchaseId }) {
-  const key = `purchase-inventory:${purchaseId}`; const [lines, setLines] = useState([blank()]); const [message, setMessage] = useState('');
+  const key = `purchase-inventory:${purchaseId}`; const [lines, setLines] = useState([blank()]); const message = '';
   useEffect(() => { const saved = localStorage.getItem(key); setLines(saved ? JSON.parse(saved) : [blank()]); }, [key]);
   const update = (index, field, value) => setLines((current) => current.map((line, i) => i === index ? { ...line, [field]: value } : line));
-  function save() { localStorage.setItem(key, JSON.stringify(lines)); setMessage('Inventaire sauvegardé sans modifier le stock.'); }
+  function save() { localStorage.setItem(key, JSON.stringify(lines)); toast.success('Inventaire sauvegardé sans modifier le stock.'); }
   return <section className="stats-panel inventory-draft"><div className="panel-heading"><h2>Inventaire du ticket</h2><span>Vérifie les informations détectées</span></div><div className="overflow-x-auto"><table className="table"><thead><tr><th>Produit</th><th>Quantité</th><th>Prix achat unitaire</th><th>Prix net promo</th><th>Prix de vente</th><th /></tr></thead><tbody>{lines.map((line, index) => <tr key={index}><td><input className="input" value={line.name} onChange={(event) => update(index, 'name', event.target.value)} /></td><td><input className="input" type="number" min="1" value={line.quantity} onChange={(event) => update(index, 'quantity', event.target.value)} /></td><td><input className="input" type="number" min="0" step="0.01" value={line.purchase_price} onChange={(event) => update(index, 'purchase_price', event.target.value)} /></td><td><input className="input" type="number" min="0" step="0.01" value={line.promo_price} onChange={(event) => update(index, 'promo_price', event.target.value)} /></td><td><input className="input" type="number" min="0" step="0.01" value={line.sale_price} onChange={(event) => update(index, 'sale_price', event.target.value)} /></td><td><button className="btn btn-sm" type="button" onClick={() => setLines((current) => current.filter((_, i) => i !== index))}>Retirer</button></td></tr>)}</tbody></table></div><div className="sale-actions"><button className="btn" type="button" onClick={() => setLines((current) => [...current, blank()])}>Ajouter une ligne</button><button className="btn btn-primary" type="button" onClick={save}>Sauvegarder l’inventaire</button></div>{message && <p className="sale-message" role="status">{message}</p>}</section>;
 }
 InventoryDraft.propTypes = { purchaseId: PropTypes.string.isRequired };

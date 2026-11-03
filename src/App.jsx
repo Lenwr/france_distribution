@@ -2,6 +2,8 @@ import { localMode } from './services/appMode.js';
 import './App.css';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import AuthRoute from './routes/AuthRoute';
 import AdminRoute from './routes/AdminRoute';
 import AppShell from './components/AppShell';
@@ -21,7 +23,7 @@ const NotFound = lazy(() => import('./components/notFound'));
 export default function App() {
   const [, setCurrencyVersion] = useState(0);
   useEffect(() => { const update = () => setCurrencyVersion((version) => version + 1); window.addEventListener('currency-rate-updated', update); refreshExchangeRate(); return () => window.removeEventListener('currency-rate-updated', update); }, []);
-  return <BrowserRouter><Suspense fallback={<p role="status" className="p-8">Chargement…</p>}><Routes>
+  return <BrowserRouter><ToastContainer position="top-right" autoClose={3500} newestOnTop closeOnClick pauseOnHover theme="light" /><Suspense fallback={<p role="status" className="p-8">Chargement…</p>}><Routes>
     <Route path="/catalogue-public" element={<PublicCatalogue />} />
     <Route path="/" element={<AdminRoute><AppShell><Dashboard /></AppShell></AdminRoute>} />
     <Route path="/sales" element={<AdminRoute><AppShell><Sales /></AppShell></AdminRoute>} />
