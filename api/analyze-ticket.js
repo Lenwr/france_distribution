@@ -15,7 +15,7 @@ async function verifyFirebaseToken(token) {
 export default async function handler(request, response) {
   response.setHeader('X-Ticket-Vision-Version', apiVersion);
   if (request.method !== 'POST') return response.status(405).json({ error: 'Méthode non autorisée.' });
-  if (!process.env.OPENAI_API_KEY) return response.status(503).json({ error: 'Analyse Vision non configurée.' });
+  if (!process.env.OPENAI_API_KEY) return response.status(503).json({ error: 'Analyse Vision non configurée.', detectedVariables: Object.keys(process.env).filter((key) => key.includes('OPENAI')) });
   try {
     const token = request.headers.authorization?.replace(/^Bearer\s+/i, '');
     if (!token) return response.status(401).json({ error: 'Connexion requise.' });
