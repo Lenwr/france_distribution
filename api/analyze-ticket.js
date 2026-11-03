@@ -1,6 +1,7 @@
 /* global process */
 
 const firebaseApiKey = process.env.FIREBASE_WEB_API_KEY || 'AIzaSyALS0RP2ri_h5Z_H839hQYPl6LgQWSSFNk';
+const apiVersion = '2026-11-03.2';
 
 const schema = { type: 'object', additionalProperties: false, required: ['supplier', 'date', 'total_eur', 'items'], properties: { supplier: { type: 'string' }, date: { type: 'string' }, total_eur: { type: ['number', 'null'] }, items: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['name', 'quantity', 'unit_price_eur', 'line_total_eur', 'discount_eur', 'net_unit_price_eur'], properties: { name: { type: 'string' }, quantity: { type: 'number' }, unit_price_eur: { type: ['number', 'null'] }, line_total_eur: { type: ['number', 'null'] }, discount_eur: { type: ['number', 'null'] }, net_unit_price_eur: { type: ['number', 'null'] } } } } } };
 
@@ -12,6 +13,7 @@ async function verifyFirebaseToken(token) {
 }
 
 export default async function handler(request, response) {
+  response.setHeader('X-Ticket-Vision-Version', apiVersion);
   if (request.method !== 'POST') return response.status(405).json({ error: 'Méthode non autorisée.' });
   if (!process.env.OPENAI_API_KEY) return response.status(503).json({ error: 'Analyse Vision non configurée.' });
   try {
