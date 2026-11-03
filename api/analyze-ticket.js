@@ -1,13 +1,15 @@
-import { getApps, initializeApp } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
-
 /* global process */
 
-if (!getApps().length) initializeApp({ projectId: 'france-distribution-bcfee' });
+const firebaseApiKey = process.env.FIREBASE_WEB_API_KEY || 'AIzaSyALS0RP2ri_h5Z_H839hQYPl6LgQWSSFNk';
 
 const schema = { type: 'object', additionalProperties: false, required: ['supplier', 'date', 'total_eur', 'items'], properties: { supplier: { type: 'string' }, date: { type: 'string' }, total_eur: { type: ['number', 'null'] }, items: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['name', 'quantity', 'unit_price_eur', 'line_total_eur', 'discount_eur', 'net_unit_price_eur'], properties: { name: { type: 'string' }, quantity: { type: 'number' }, unit_price_eur: { type: ['number', 'null'] }, line_total_eur: { type: ['number', 'null'] }, discount_eur: { type: ['number', 'null'] }, net_unit_price_eur: { type: ['number', 'null'] } } } } } };
 
 function outputText(payload) { return payload.output_text || payload.output?.flatMap((entry) => entry.content || []).find((entry) => entry.type === 'output_text')?.text; }
+
+async function verifyFirebaseToken(token) {
+  const verification = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${firebaseApiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken: token }) });
+  if (!verification.ok) throw new Error('Jeton Firebase invalide.');
+}
 
 export default async function handler(request, response) {
   if (request.method !== 'POST') return response.status(405).json({ error: 'Méthode non autorisée.' });
@@ -15,7 +17,7 @@ export default async function handler(request, response) {
   try {
     const token = request.headers.authorization?.replace(/^Bearer\s+/i, '');
     if (!token) return response.status(401).json({ error: 'Connexion requise.' });
-    await getAuth().verifyIdToken(token);
+    await verifyFirebaseToken(token);
     const images = request.body?.images;
     if (!Array.isArray(images) || !images.length) return response.status(400).json({ error: 'Ajoute au moins une photo.' });
     if (images.length > 10) return response.status(400).json({ error: 'Maximum 10 photos par ticket.' });
