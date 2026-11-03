@@ -8,7 +8,8 @@ import { analyzeTicketImages } from '../../services/ticketOcr.js';
 import { analyzeTicketWithVision } from '../../services/ticketVision.js';
 import { updatePurchaseInventory } from '../../services/purchasesService.js';
 const blank = () => ({ name: '', quantity: 1, purchase_price: '', promo_price: '', sale_price: '' });
-export default function InventoryDraft({ purchaseId, initialLines = [] }) {
+const emptyLines = [];
+export default function InventoryDraft({ purchaseId, initialLines = emptyLines }) {
   const key = `purchase-inventory:${purchaseId}`; const [lines, setLines] = useState([blank()]); const [analyzing, setAnalyzing] = useState(false);
   useEffect(() => { const saved = localStorage.getItem(key); if (saved) return setLines(JSON.parse(saved)); if (initialLines.length) return setLines(initialLines); getDoc(doc(firestore, 'achats', purchaseId)).then((snapshot) => setLines(snapshot.data()?.inventory?.length ? snapshot.data().inventory : [blank()])).catch(() => setLines([blank()])); }, [key, purchaseId, initialLines]);
   const update = (index, field, value) => setLines((current) => current.map((line, i) => i === index ? { ...line, [field]: value } : line));
