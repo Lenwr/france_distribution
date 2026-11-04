@@ -5,6 +5,16 @@ const apiVersion = '2026-11-03.2';
 
 const schema = { type: 'object', additionalProperties: false, required: ['supplier', 'date', 'total_eur', 'items'], properties: { supplier: { type: 'string' }, date: { type: 'string' }, total_eur: { type: ['number', 'null'] }, items: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['name', 'quantity', 'unit_price_eur', 'line_total_eur', 'discount_eur', 'net_unit_price_eur'], properties: { name: { type: 'string' }, quantity: { type: 'number' }, unit_price_eur: { type: ['number', 'null'] }, line_total_eur: { type: ['number', 'null'] }, discount_eur: { type: ['number', 'null'] }, net_unit_price_eur: { type: ['number', 'null'] } } } } } };
 
+const analysisInstructions = `Analyse toutes les photos comme les parties successives d'un seul ticket de caisse français.
+Les photos d'un ticket long peuvent se chevaucher : repère les lignes communes et ne compte chaque achat qu'une seule fois.
+Extrais le magasin, la date au format YYYY-MM-DD, le total payé et les produits réellement achetés.
+Une notation comme « 7*2,34 », « 7 x 2,34 € » ou « 7X2.34 » signifie quantité 7 et prix unitaire 2,34 €.
+Quand un produit sans multiplicateur est suivi uniquement de son montant, utilise une quantité de 1.
+Les sections « Articles avec remise », « Articles remisés » ou similaires récapitulent souvent des produits déjà listés : ne les ajoute jamais une seconde fois. Utilise-les uniquement pour renseigner discount_eur et net_unit_price_eur du produit correspondant lorsque l'association est certaine.
+Ignore les titres de rayon, sous-totaux, TVA, moyens de paiement, fidélité, codes-barres et lignes administratives.
+Regroupe les lignes strictement identiques d'un même produit lorsque cela est sans ambiguïté, en additionnant leurs quantités.
+N'invente rien : utilise null ou une chaîne vide si une valeur est illisible ou incertaine.`;
+
 function outputText(payload) { return payload.output_text || payload.output?.flatMap((entry) => entry.content || []).find((entry) => entry.type === 'output_text')?.text; }
 
 async function verifyFirebaseToken(token) {
@@ -24,7 +34,7 @@ export default async function handler(request, response) {
     if (!Array.isArray(images) || !images.length) return response.status(400).json({ error: 'Ajoute au moins une photo.' });
     if (images.length > 10) return response.status(400).json({ error: 'Maximum 10 photos par ticket.' });
     if (images.some((image) => typeof image !== 'string' || !image.startsWith('data:image/'))) return response.status(400).json({ error: 'Format d’image invalide.' });
-    const openaiResponse = await fetch('https://api.openai.com/v1/responses', { method: 'POST', headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: process.env.OPENAI_VISION_MODEL || 'gpt-4o-mini', input: [{ role: 'user', content: [{ type: 'input_text', text: 'Analyse toutes ces photos comme les pages d’un seul ticket de caisse français. Extrais le magasin, la date, le total et chaque produit. Une ligne « 12 x 0,99 € » signifie quantité 12 et prix unitaire 0,99 €. Ignore les titres de rayon, TVA, paiements et totaux. N’invente rien : utilise null ou une chaîne vide si une valeur est illisible.' }, ...images.map((image) => ({ type: 'input_image', image_url: image, detail: 'high' }))] }], text: { format: { type: 'json_schema', name: 'ticket_inventory', strict: true, schema } } }) });
+    const openaiResponse = await fetch('https://api.openai.com/v1/responses', { method: 'POST', headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: process.env.OPENAI_VISION_MODEL || 'gpt-4o-mini', input: [{ role: 'user', content: [{ type: 'input_text', text: analysisInstructions }, ...images.map((image) => ({ type: 'input_image', image_url: image, detail: 'high' }))] }], text: { format: { type: 'json_schema', name: 'ticket_inventory', strict: true, schema } } }) });
     const payload = await openaiResponse.json();
     if (!openaiResponse.ok) return response.status(openaiResponse.status).json({ error: payload.error?.message || 'Analyse Vision impossible.' });
     const text = outputText(payload);
