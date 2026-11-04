@@ -92,8 +92,8 @@ service cloud.firestore {
         && request.resource.data.supplier is string
         && validPrice(request.resource.data.total)
         && request.resource.data.file_name is string
-        && request.resource.data.file_data is string
-        && request.resource.data.file_data.size() < 1000000;
+        && ((request.resource.data.file_url is string && request.resource.data.storage_path is string)
+          || (request.resource.data.file_data is string && request.resource.data.file_data.size() < 1000000));
       allow update, delete: if isAdmin();
     }
   }
