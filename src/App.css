@@ -154,3 +154,28 @@ dialog.modal:not([open]) { display: none; }
 .document-camera.document-camera-full { position: fixed; z-index: 2000; inset: 0; display: block; width: 100%; height: 100dvh; margin: 0; padding: 0; overflow: hidden; border-radius: 0; background: #07100c; }.document-camera.document-camera-full video { display: block; width: 100%; height: calc(100dvh - 180px); max-height: none; object-fit: cover; border-radius: 0; }.document-camera.document-camera-full .scan-frame { inset: 4% 5% 196px; border-width: 2px; border-color: #87e6d4; border-radius: 14px; box-shadow: 0 0 0 9999px #0005; }.document-camera.document-camera-full .camera-close { top: max(14px, env(safe-area-inset-top)); right: 14px; }.document-camera.document-camera-full .camera-page-count { top: max(14px, env(safe-area-inset-top)); left: 14px; }.document-camera.document-camera-full .camera-previews { right: 12px; bottom: calc(92px + env(safe-area-inset-bottom)); left: 12px; height: 66px; padding: 2px; }.document-camera.document-camera-full .camera-preview { flex-basis: 52px; width: 52px; height: 62px; }.document-camera.document-camera-full .camera-actions { bottom: env(safe-area-inset-bottom); min-height: 88px; padding: 10px 16px; background: #07100c; }.document-camera.document-camera-full .camera-finish { min-height: 48px; }
 @media (max-width: 520px) { .document-camera.document-camera-full .camera-actions { justify-content: space-between; gap: 12px; }.document-camera.document-camera-full .camera-capture { flex: 0 0 58px; width: 58px; height: 58px; }.document-camera.document-camera-full .camera-finish { flex: 1; padding-inline: 12px; font-size: 12px; } }
 .purchase-form { max-width: none; margin-bottom: 22px; }.purchase-form h2 { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; }.purchase-form form { display: grid; gap: 14px; }.purchase-form label { display: grid; gap: 6px; }.purchase-form textarea { min-height: 70px; resize: vertical; }.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }.purchase-history { overflow: hidden; }.purchase-list article { display: flex; justify-content: space-between; gap: 18px; padding: 18px 22px; border-bottom: 1px solid var(--line); }.purchase-list article:last-child { border-bottom: 0; }.purchase-list article > div { display: grid; gap: 5px; }.purchase-list small, .purchase-list p { color: var(--muted); font-size: 11px; }.purchase-list article > div:last-child { align-items: end; }.purchase-list a { text-decoration: none; }.purchase-history .search-field { max-width: 220px; }
+@media (max-width: 700px) {
+  .purchase-form { padding: 18px; }
+  .purchase-form .form-grid { grid-template-columns: 1fr; }
+  .purchase-form form > .btn { width: 100%; }
+  .inventory-draft .panel-heading { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .inventory-reanalyze { align-items: stretch; flex-direction: column; padding: 14px; }
+  .inventory-reanalyze .btn { width: 100%; justify-content: center; }
+  .inventory-draft .overflow-x-auto { overflow: visible; padding: 12px; background: #f6f8f3; }
+  .inventory-draft .table { display: block; min-width: 0; table-layout: auto; }
+  .inventory-draft .table thead { display: none; }
+  .inventory-draft .table tbody { display: grid; gap: 12px; }
+  .inventory-draft .table tr { display: grid; gap: 11px; padding: 15px; border: 1px solid var(--line); border-radius: 12px; background: white; box-shadow: 0 3px 12px #1733260a; }
+  .inventory-draft .table td { display: grid; width: 100% !important; gap: 6px; padding: 0; border: 0; }
+  .inventory-draft .table td::before { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .45px; text-transform: uppercase; }
+  .inventory-draft .table td:nth-child(1)::before { content: 'Produit'; }
+  .inventory-draft .table td:nth-child(2)::before { content: 'Quantité'; }
+  .inventory-draft .table td:nth-child(3)::before { content: 'Prix achat unitaire'; }
+  .inventory-draft .table td:nth-child(4)::before { content: 'Prix net promo'; }
+  .inventory-draft .table td:nth-child(5)::before { content: 'Prix de vente'; }
+  .inventory-draft .table td .input { width: 100%; max-width: none !important; min-height: 46px; }
+  .inventory-draft .table td:last-child { margin-top: 3px; }
+  .inventory-draft .table td:last-child .btn { width: 100%; }
+  .inventory-draft .sale-actions { display: grid; grid-template-columns: 1fr; padding: 14px; margin: 0; }
+  .inventory-draft .sale-actions .btn { width: 100%; }
+}
