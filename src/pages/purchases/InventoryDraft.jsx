@@ -6,6 +6,7 @@ import { doc, getDoc } from "../../services/dataStore.js";
 import { firestore } from "../../hooks/useSupabase.js";
 import { analyzeTicketImages } from "../../services/ticketOcr.js";
 import { analyzeTicketWithVision } from "../../services/ticketVision.js";
+import { pdfUrlToImageFiles } from "../../services/pdfToImages.js";
 import { updatePurchaseInventory } from "../../services/purchasesService.js";
 const blank = () => ({
   name: "",
@@ -22,6 +23,7 @@ export default function InventoryDraft({
   const key = `purchase-inventory:${purchaseId}`;
   const [lines, setLines] = useState([blank()]);
   const [validation, setValidation] = useState(null);
+  const [pdfUrl, setPdfUrl] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   useEffect(() => {
     const saved = localStorage.getItem(key);
@@ -33,6 +35,7 @@ export default function InventoryDraft({
         if (!saved && !initialLines.length)
           setLines(data?.inventory?.length ? data.inventory : [blank()]);
         setValidation(data?.analysis_validation || null);
+        setPdfUrl(data?.file_url || data?.file_data || "");
       })
       .catch(() => setLines([blank()]));
   }, [key, purchaseId, initialLines]);
@@ -91,6 +94,22 @@ export default function InventoryDraft({
       setAnalyzing(false);
     }
   }
+  async function reanalyzeSavedPdf() {
+    if (!pdfUrl) {
+      toast.warning(
+        "PDF archivé indisponible. Sélectionne les photos du ticket."
+      );
+      return;
+    }
+    try {
+      const pending = toast.loading("Lecture du PDF archivé…");
+      const files = await pdfUrlToImageFiles(pdfUrl);
+      toast.dismiss(pending);
+      await reanalyze(files);
+    } catch (error) {
+      toast.error(error.message || "Impossible de relire le PDF archivé.");
+    }
+  }
   return (
     <section className="stats-panel inventory-draft">
       <div className="panel-heading">
@@ -98,9 +117,17 @@ export default function InventoryDraft({
         <span>Vérifie les informations détectées</span>
       </div>
       <div className="inventory-reanalyze">
-        <label className="btn">
+        <button
+          className="btn"
+          type="button"
+          disabled={analyzing}
+          onClick={reanalyzeSavedPdf}
+        >
           <ScanText size={16} />{" "}
-          {analyzing ? "Analyse en cours…" : "Réanalyser avec les photos"}
+          {analyzing ? "Analyse en cours…" : "Réanalyser le PDF archivé"}
+        </button>
+        <label className="btn btn-sm">
+          Utiliser des photos à la place
           <input
             className="sr-only"
             type="file"
@@ -113,8 +140,8 @@ export default function InventoryDraft({
           />
         </label>
         <small>
-          Pour les anciens tickets vides, sélectionne à nouveau toutes les
-          photos du ticket.
+          Le PDF sauvegardé est utilisé automatiquement. Les photos servent
+          uniquement de secours.
         </small>
       </div>
       {validation && (
