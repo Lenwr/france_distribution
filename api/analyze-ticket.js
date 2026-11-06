@@ -2,7 +2,7 @@
 
 const firebaseApiKey =
   process.env.FIREBASE_WEB_API_KEY || "AIzaSyALS0RP2ri_h5Z_H839hQYPl6LgQWSSFNk";
-const apiVersion = "2026-11-06.1";
+const apiVersion = "2026-11-06.2";
 
 const schema = {
   type: "object",
@@ -31,6 +31,7 @@ const schema = {
           "quantity",
           "unit_price_eur",
           "line_total_eur",
+          "paid_total_eur",
           "discount_eur",
           "net_unit_price_eur",
           "source_section",
@@ -42,6 +43,7 @@ const schema = {
           quantity: { type: "number" },
           unit_price_eur: { type: ["number", "null"] },
           line_total_eur: { type: ["number", "null"] },
+          paid_total_eur: { type: ["number", "null"] },
           discount_eur: { type: ["number", "null"] },
           net_unit_price_eur: { type: ["number", "null"] },
           source_section: {
@@ -59,16 +61,19 @@ const schema = {
 const analysisInstructions = `Analyse toutes les photos comme les parties successives d'un seul ticket de caisse français.
 Les photos d'un ticket long peuvent se chevaucher : déduplique uniquement les mêmes lignes physiques visibles sur deux photos successives. Ne confonds jamais ce chevauchement photographique avec deux achats similaires imprimés à des endroits différents du ticket.
 Commence par lire fidèlement les blocs dans leur ordre d'impression. Extrais le magasin, la date au format YYYY-MM-DD, le total payé, le total des remises, le nombre d'articles imprimé et tous les produits réellement achetés.
+La sortie items doit être un INVENTAIRE REGROUPÉ, pas une transcription ligne par ligne : une seule ligne finale par produit commercial regroupé, avec sa quantité totale, sa valeur initiale totale et son total réellement payé après promotions.
 Une notation comme « 7*2,34 », « 7 x 2,34 € » ou « 7X2.34 » signifie quantité 7 et prix normal unitaire 2,34 €.
 Quand un produit sans multiplicateur est suivi uniquement de son montant, utilise une quantité de 1.
 Les titres de section donnent du contexte mais leur présentation varie selon le magasin. Une section de remises peut contenir des achats supplémentaires ou détailler des promotions : suis les lignes physiques et les calculs, sans supposer qu'il s'agit d'un récapitulatif.
-Une ligne produit peut être immédiatement suivie d'une ligne de remise négative. Associe cette remise au produit précédent seulement lorsque le libellé, la proximité et les montants rendent cette association crédible :
+Une ligne produit peut être immédiatement suivie d'une ligne de remise négative. Associe cette remise au produit précédent seulement lorsque le libellé, la proximité et les montants rendent cette association crédible. Une ligne négative, un avantage fidélité, « GDM », « SAVE », « REMISE », « CALENDRIERS », ou un autre libellé de réduction N'EST JAMAIS un produit séparé et ne doit jamais apparaître dans items.
+Pour chaque produit regroupé :
 - unit_price_eur = prix normal unitaire affiché après le multiplicateur ;
-- line_total_eur = quantité × prix normal unitaire, avant remise ;
-- discount_eur = montant positif de la remise totale associée au lot ;
-- net_unit_price_eur = (line_total_eur - discount_eur) / quantité.
+- line_total_eur = valeur totale au prix initial avant toutes les remises ;
+- paid_total_eur = total réellement payé pour ce produit après toutes ses remises ;
+- discount_eur = line_total_eur - paid_total_eur ;
+- net_unit_price_eur = paid_total_eur / quantité.
 Le montant situé à droite d'une ligne remisée peut déjà être le total net du lot : ne le prends pas pour un prix unitaire.
-Conserve des lignes séparées pour un même produit si le prix normal ou le prix net promotionnel diffère. Regroupe uniquement les lignes ayant le même nom, le même prix normal ET le même prix net, en additionnant leurs quantités et leurs totaux.
+Regroupe toutes les occurrences du même produit, même si certaines sont gratuites ou ont une remise différente. Si un produit regroupé a plusieurs prix initiaux, unit_price_eur est la moyenne pondérée line_total_eur / quantité. Regroupe aussi des variantes d'une même famille lorsqu'une ligne de promotion montre clairement qu'elles participent au même avantage ; utilise alors un nom explicite comme « Produit (variante A + variante B) ».
 Une remise égale au total normal donne un prix net de 0 € : le produit gratuit doit rester dans l'inventaire.
 Pour chaque produit, recopie dans source_text le texte brut utile visible sur le ticket. Indique confidence=high si nom, quantité et prix sont nets et cohérents, medium si une interprétation mineure est nécessaire, low si l'association d'une remise, la quantité ou le prix est ambiguë. Utilise source_section=discounted uniquement si le produit est clairement dans une zone promotionnelle.
 Utilise le total des remises, le total payé et le nombre total d'articles imprimés en bas du ticket comme contrôles de cohérence, sans les ajouter comme produits. Ne modifie jamais une valeur lisible uniquement pour forcer l'égalité des totaux.
@@ -86,14 +91,27 @@ export function normalizeAnalysis(analysis) {
   const items = (analysis.items || []).map((item) => {
     const quantity = Math.max(1, numberOrNull(item.quantity) || 1);
     const unitPrice = numberOrNull(item.unit_price_eur);
-    const discount = numberOrNull(item.discount_eur);
+    const providedPaidTotal = numberOrNull(item.paid_total_eur);
+    const providedDiscount = numberOrNull(item.discount_eur);
     const grossTotal =
       unitPrice === null
         ? numberOrNull(item.line_total_eur)
         : roundMoney(quantity * unitPrice);
+    const paidTotal =
+      providedPaidTotal !== null
+        ? roundMoney(Math.max(0, providedPaidTotal))
+        : grossTotal !== null && providedDiscount !== null
+        ? roundMoney(Math.max(0, grossTotal - providedDiscount))
+        : grossTotal;
+    const discount =
+      grossTotal !== null && paidTotal !== null
+        ? roundMoney(Math.max(0, grossTotal - paidTotal))
+        : providedDiscount;
     const calculatedNet =
-      grossTotal !== null && discount !== null && discount > 0
-        ? roundMoney(Math.max(0, grossTotal - discount) / quantity)
+      paidTotal !== null &&
+      grossTotal !== null &&
+      Math.abs(paidTotal - grossTotal) >= 0.01
+        ? roundMoney(paidTotal / quantity)
         : null;
     const providedNet = numberOrNull(item.net_unit_price_eur);
     const netUnitPrice =
@@ -111,6 +129,7 @@ export function normalizeAnalysis(analysis) {
       quantity,
       unit_price_eur: unitPrice,
       line_total_eur: grossTotal,
+      paid_total_eur: paidTotal,
       discount_eur: discount,
       net_unit_price_eur: netUnitPrice,
       confidence,
@@ -120,14 +139,9 @@ export function normalizeAnalysis(analysis) {
         unitPrice === null,
     };
   });
-  const calculable = items.filter((item) => item.line_total_eur !== null);
+  const calculable = items.filter((item) => item.paid_total_eur !== null);
   const computedTotal = calculable.length
-    ? roundMoney(
-        calculable.reduce(
-          (sum, item) => sum + item.line_total_eur - (item.discount_eur || 0),
-          0
-        )
-      )
+    ? roundMoney(calculable.reduce((sum, item) => sum + item.paid_total_eur, 0))
     : null;
   const computedCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const receiptTotal = numberOrNull(analysis.total_eur);
@@ -188,14 +202,12 @@ export default async function handler(request, response) {
   if (request.method !== "POST")
     return response.status(405).json({ error: "Méthode non autorisée." });
   if (!process.env.OPENAI_API_KEY)
-    return response
-      .status(503)
-      .json({
-        error: "Analyse Vision non configurée.",
-        detectedVariables: Object.keys(process.env).filter((key) =>
-          key.includes("OPENAI")
-        ),
-      });
+    return response.status(503).json({
+      error: "Analyse Vision non configurée.",
+      detectedVariables: Object.keys(process.env).filter((key) =>
+        key.includes("OPENAI")
+      ),
+    });
   try {
     const token = request.headers.authorization?.replace(/^Bearer\s+/i, "");
     if (!token)
@@ -247,11 +259,9 @@ export default async function handler(request, response) {
     });
     const payload = await openaiResponse.json();
     if (!openaiResponse.ok)
-      return response
-        .status(openaiResponse.status)
-        .json({
-          error: payload.error?.message || "Analyse Vision impossible.",
-        });
+      return response.status(openaiResponse.status).json({
+        error: payload.error?.message || "Analyse Vision impossible.",
+      });
     const text = outputText(payload);
     if (!text) throw new Error("Réponse Vision vide.");
     return response.status(200).json(normalizeAnalysis(JSON.parse(text)));

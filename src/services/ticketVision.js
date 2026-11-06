@@ -38,6 +38,8 @@ export async function analyzeTicketWithVision(files) {
       promo_price: item.net_unit_price_eur ?? "",
       sale_price: "",
       discount_eur: item.discount_eur ?? "",
+      initial_total_eur: item.line_total_eur ?? "",
+      paid_total_eur: item.paid_total_eur ?? "",
       confidence: item.confidence || "medium",
       review_required: Boolean(item.review_required),
       source_text: item.source_text || "",
