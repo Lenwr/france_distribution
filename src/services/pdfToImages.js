@@ -1,5 +1,6 @@
 import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+import { firebaseAuth } from "./firebaseClient.js";
 
 GlobalWorkerOptions.workerSrc = workerUrl;
 
@@ -16,7 +17,16 @@ const canvasToFile = (canvas, name) =>
   });
 
 export async function pdfUrlToImageFiles(url) {
-  const response = await fetch(url);
+  if (!firebaseAuth?.currentUser)
+    throw new Error("Connexion requise pour relire le PDF.");
+  const response = await fetch(
+    `/api/ticket-pdf?url=${encodeURIComponent(url)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${await firebaseAuth.currentUser.getIdToken()}`,
+      },
+    }
+  );
   if (!response.ok) throw new Error("Le PDF archivé est introuvable.");
   const pdfDocument = await getDocument({ data: await response.arrayBuffer() })
     .promise;
