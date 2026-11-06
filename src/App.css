@@ -170,7 +170,7 @@ dialog.modal:not([open]) { display: none; }
   .inventory-draft .table td::before { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .45px; text-transform: uppercase; }
   .inventory-draft .table td:nth-child(1)::before { content: 'Produit'; }
   .inventory-draft .table td:nth-child(2)::before { content: 'Quantité'; }
-  .inventory-draft .table td:nth-child(3)::before { content: 'Prix achat unitaire'; }
+  .inventory-draft .table td:nth-child(3)::before { content: 'Prix normal unitaire'; }
   .inventory-draft .table td:nth-child(4)::before { content: 'Prix net promo'; }
   .inventory-draft .table td:nth-child(5)::before { content: 'Prix de vente'; }
   .inventory-draft .table td .input { width: 100%; max-width: none !important; min-height: 46px; }
