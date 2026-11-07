@@ -101,12 +101,13 @@ export default function InventoryDraft({
       );
       return;
     }
+    const pending = toast.loading("Lecture du PDF archivé…");
     try {
-      const pending = toast.loading("Lecture du PDF archivé…");
       const files = await pdfUrlToImageFiles(pdfUrl);
       toast.dismiss(pending);
       await reanalyze(files);
     } catch (error) {
+      toast.dismiss(pending);
       toast.error(error.message || "Impossible de relire le PDF archivé.");
     }
   }

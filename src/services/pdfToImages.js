@@ -50,6 +50,6 @@ export async function pdfUrlToImageFiles(url) {
     files.push(await canvasToFile(canvas, `ticket-page-${pageNumber}.jpg`));
     page.cleanup();
   }
-  await pdfDocument.destroy();
+  await pdfDocument.cleanup();
   return files;
 }
